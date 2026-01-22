@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 226, 232, 240;
+  --background-start-rgb: 5, 10, 20;
+  --background-end-rgb: 5, 10, 20;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Blueprint Grid Pattern */
+.bg-blueprint-grid {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(20, 184, 166, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 184, 166, 0.05) 1px, transparent 1px);
+}
+
+.bg-blueprint-grid-lg {
+  background-size: 120px 120px;
+  background-image:
+    linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px);
+}
+
+/* Tech / Blueprint Aesthetics */
+.glass-panel {
+  @apply bg-blueprint-card/80 backdrop-blur-sm border border-blueprint-grid shadow-lg;
+}
+
+.tech-border {
+  @apply relative;
+}
+
+.tech-border::before {
+  content: '';
+  @apply absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-blueprint-accent opacity-50;
+}
+
+.tech-border::after {
+  content: '';
+  @apply absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-blueprint-accent opacity-50;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-blueprint-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-blueprint-grid rounded hover:bg-blueprint-accent/50 transition-colors;
+}
+
+/* Utilities */
+.text-glow {
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.border-glow {
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+@keyframes pulse-flow {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+  100% { opacity: 0.3; }
+}
+
+.animate-flow {
+  animation: pulse-flow 3s infinite ease-in-out;
+}

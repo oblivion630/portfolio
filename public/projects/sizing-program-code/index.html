@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sizing Program Code - File Browser</title>
+    <style>
+        body {
+            background-color: #0f172a; /* Slate 900 - matches blueprint bg */
+            color: #e2e8f0; /* Slate 200 */
+            font-family: 'Courier New', Courier, monospace;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #38bdf8; /* Sky 400 - blueprint highlight */
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-item {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .file-item:hover {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+        }
+        a {
+            color: #94a3b8;
+            text-decoration: none;
+            flex-grow: 1;
+            display: block;
+        }
+        a:hover {
+            color: #fff;
+        }
+        .icon {
+            margin-right: 15px;
+            color: #38bdf8;
+        }
+    </style>
+</head>
+<body>
+    <h1>> Sizing_Program_Code_Repository</h1>
+    <ul class="file-list">
+        <li class="file-item"><span class="icon">py</span><a href="app.py">app.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="main.py">main.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="npsh.py">npsh.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="pipe_sizing.py">pipe_sizing.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="piping.py">piping.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="pump.py">pump.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="reactions.py">reactions.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="results.py">results.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="system.py">system.py</a></li>
+        <li class="file-item"><span class="icon">py</span><a href="units.py">units.py</a></li>
+        <li class="file-item"><span class="icon">txt</span><a href="README.txt">README.txt</a></li>
+    </ul>
+</body>
+</html>
