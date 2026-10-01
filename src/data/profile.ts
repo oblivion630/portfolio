@@ -152,7 +152,8 @@ export const profile: Profile = {
             featured: true,
             bullets: [
                 "Implemented core chemical engineering design correlations, including flow regime analysis, friction factor correlations, and total dynamic head calculations within an interactive user interface.",
-                "Generated equipment sizing and performance estimates to support preliminary design and feasibility studies."
+                "Generated equipment sizing and performance estimates to support preliminary design and feasibility studies.",
+                "Ported to a live in-browser calculator, extended with heat exchanger, storage tank, PFR and flash drum modules."
             ],
             links: [
                 { label: "Open Calculator", url: "/calculator" }

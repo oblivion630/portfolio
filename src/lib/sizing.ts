@@ -97,3 +97,65 @@ export function cstrVolume(Q: number, CA0: number, X: number, k: number, n: numb
     const V = FA0 * X / rAout;
     return { V, tau: V / Q, CAout, rAout, FA0 };
 }
+
+// PFR, same rate law, by integrating dV = FA0 dX / (-rA) with CA = CA0 (1 - X).
+export function pfrVolume(Q: number, CA0: number, X: number, k: number, n: number) {
+    let V: number;
+    if (n === 1) V = (Q / k) * Math.log(1 / (1 - X));
+    else V = Q * Math.pow(CA0, 1 - n) / (k * (n - 1)) * (Math.pow(1 - X, 1 - n) - 1);
+    return { V, tau: V / Q };
+}
+
+// ---------- Heat exchanger ----------
+
+// Hot-side duty sets the cold outlet; area from Q = U A LMTD. Flows in kg/s, cp in kJ/(kg·K), U in W/(m²·K).
+export function heatExchanger(
+    mHot: number, cpHot: number, ThIn: number, ThOut: number,
+    mCold: number, cpCold: number, TcIn: number,
+    U: number, counterCurrent: boolean,
+) {
+    const duty_kW = mHot * cpHot * (ThIn - ThOut);
+    const TcOut = TcIn + duty_kW / (mCold * cpCold);
+    const dT1 = counterCurrent ? ThIn - TcOut : ThIn - TcIn;
+    const dT2 = counterCurrent ? ThOut - TcIn : ThOut - TcOut;
+    const lmtd = Math.abs(dT1 - dT2) < 1e-9 ? dT1 : (dT1 - dT2) / Math.log(dT1 / dT2);
+    const area = duty_kW * 1000 / (U * lmtd);
+    return { duty_kW, TcOut, dT1, dT2, lmtd, area };
+}
+
+// ---------- Storage tank / vessel ----------
+
+// Liquid hold-up from flow x residence time, vessel volume from the fill fraction,
+// then a cylinder of the requested L/D: V = (pi/4) D^2 L with L = ratio * D.
+export function tankSize(Q: number, holdSeconds: number, fill: number, LoverD: number) {
+    const liquid = Q * holdSeconds;
+    const vessel = liquid / fill;
+    const D = Math.cbrt(4 * vessel / (Math.PI * LoverD));
+    return { liquid, vessel, D, L: LoverD * D };
+}
+
+// ---------- Flash drum ----------
+
+// Isothermal flash with constant K-values: solve Rachford–Rice for the vapour fraction V/F.
+export function flash(z: number[], K: number[]) {
+    const rr = (psi: number) => z.reduce((sum, zi, i) => sum + zi * (K[i] - 1) / (1 + psi * (K[i] - 1)), 0);
+    const bubble = z.reduce((s, zi, i) => s + zi * K[i], 0); // < 1: feed is subcooled liquid
+    const dew = z.reduce((s, zi, i) => s + zi / K[i], 0);    // < 1: feed is superheated vapour
+
+    let psi: number;
+    let phase: 'two-phase' | 'liquid' | 'vapour';
+    if (bubble <= 1) { psi = 0; phase = 'liquid'; }
+    else if (dew <= 1) { psi = 1; phase = 'vapour'; }
+    else {
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 200; i++) {
+            const mid = (lo + hi) / 2;
+            if (rr(mid) > 0) lo = mid; else hi = mid;
+        }
+        psi = (lo + hi) / 2;
+        phase = 'two-phase';
+    }
+    const x = z.map((zi, i) => zi / (1 + psi * (K[i] - 1)));
+    const y = x.map((xi, i) => xi * K[i]);
+    return { psi, phase, x, y, bubble, dew };
+}

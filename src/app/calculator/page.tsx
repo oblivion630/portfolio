@@ -4,7 +4,7 @@ import { profile } from '@/data/profile';
 
 export const metadata: Metadata = {
     title: `Process Equipment Sizing Tool | ${profile.name}`,
-    description: 'Pump head and power, pipe sizing and CSTR volume calculators for preliminary process design.',
+    description: 'Pump, pipe, heat exchanger, tank, reactor and flash drum sizing calculators for preliminary process design.',
 };
 
 export default function CalculatorPage() {
@@ -21,7 +21,7 @@ export default function CalculatorPage() {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-ink">Process Equipment Sizing Tool</h1>
                 <p className="mt-2 mb-8 text-body max-w-2xl">
-                    Preliminary sizing for pumps, pipelines and CSTRs. Results update as you type. All inputs are SI units.
+                    Preliminary sizing for pumps, pipelines, heat exchangers, tanks, reactors and flash drums. Results update as you type. All inputs are SI units.
                 </p>
                 <SizingCalculator />
             </div>

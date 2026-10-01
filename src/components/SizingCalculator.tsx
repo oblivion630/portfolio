@@ -2,15 +2,19 @@
 
 import React, { useState } from 'react';
 import {
-    G, lineHydraulics, diameterForVelocity, standardPipe, totalDynamicHead, pumpPower, npshAvailable, cstrVolume, FlowRegime,
+    G, lineHydraulics, diameterForVelocity, standardPipe, totalDynamicHead, pumpPower, npshAvailable, cstrVolume, pfrVolume,
+    heatExchanger, tankSize, flash, FlowRegime,
 } from '@/lib/sizing';
 
-type Module = 'pump' | 'pipe' | 'cstr';
+type Module = 'pump' | 'pipe' | 'hx' | 'tank' | 'reactor' | 'flash';
 
 const MODULES: { id: Module; label: string; blurb: string }[] = [
     { id: 'pump', label: 'Pump', blurb: 'Total dynamic head, pump power and optional NPSH available for a single-line system.' },
     { id: 'pipe', label: 'Pipe sizing', blurb: 'Line size from a target velocity, rounded up to a standard Schedule 40 pipe, with pressure losses.' },
-    { id: 'cstr', label: 'CSTR', blurb: 'Reactor volume for a single irreversible reaction, −rA = k·CAⁿ, at a target conversion.' },
+    { id: 'hx', label: 'Heat exchanger', blurb: 'Heat duty, cold-side outlet temperature, LMTD and required area from Q = U·A·ΔT_lm.' },
+    { id: 'tank', label: 'Tank', blurb: 'Storage or surge vessel size from flow and hold-up time, as a cylinder of a chosen L/D ratio.' },
+    { id: 'reactor', label: 'Reactors', blurb: 'CSTR and PFR volumes for a single irreversible reaction, −rA = k·CAⁿ, at a target conversion.' },
+    { id: 'flash', label: 'Flash drum', blurb: 'Isothermal flash with constant K-values: vapour fraction and phase compositions from Rachford–Rice.' },
 ];
 
 // Defaults match the original Python tool.
@@ -21,6 +25,10 @@ const DEFAULTS = {
     npsh: 'no', PSurf: '101.325', PVap: '3.2', zSurf: '0', zPump: '0', LSuc: '5', KSuc: '2',
     vTarget: '1.5',
     CA0: '1000', X: '0.80', n: '1', k: '0.1',
+    mHot: '2', cpHot: '4.18', ThIn: '90', ThOut: '50', mCold: '3', cpCold: '4.18', TcIn: '20', U: '850',
+    hxFlow: 'counter', tubeOD: '25.4', tubeL: '4.88',
+    hold: '30', fill: '0.8', LD: '3',
+    F: '100', z1: '0.3', z2: '0.3', z3: '0.4', z4: '', K1: '3.0', K2: '1.2', K3: '0.3', K4: '',
 };
 type Inputs = typeof DEFAULTS;
 type Key = keyof Inputs;
@@ -108,13 +116,77 @@ function velocityNotes(v: number, regimeName: FlowRegime) {
 
 function calculate(m: Module, i: Inputs): Result {
     const num = (k: Key) => parseFloat(i[k]);
+
+    if (m === 'hx') {
+        const mHot = num('mHot'), cpHot = num('cpHot'), ThIn = num('ThIn'), ThOut = num('ThOut');
+        const mCold = num('mCold'), cpCold = num('cpCold'), TcIn = num('TcIn'), U = num('U');
+        if (![mHot, cpHot, mCold, cpCold, U].every(v => v > 0)) return { error: 'Flow rates, heat capacities and U must be greater than 0.' };
+        if (![ThIn, ThOut, TcIn].every(isFinite)) return { error: 'Enter all three temperatures.' };
+        if (!(ThIn > ThOut)) return { error: 'Hot outlet must be cooler than the hot inlet.' };
+        if (!(ThIn > TcIn)) return { error: 'Hot inlet must be hotter than the cold inlet.' };
+        const counter = i.hxFlow === 'counter';
+        const hx = heatExchanger(mHot, cpHot, ThIn, ThOut, mCold, cpCold, TcIn, U, counter);
+        if (!(hx.dT1 > 0 && hx.dT2 > 0)) {
+            return { error: `Temperature cross: the cold stream would leave at ${hx.TcOut.toFixed(1)} °C, which this ${counter ? 'counter-current' : 'co-current'} arrangement can't reach. Increase the cold flow${counter ? '' : ' or switch to counter-current'}.` };
+        }
+        const tubeOD = num('tubeOD') / 1000, tubeL = num('tubeL');
+        const rows: [string, string][] = [
+            ['Cold outlet temperature', `${fmt(hx.TcOut, 1)} °C`],
+            ['ΔT₁ / ΔT₂', `${fmt(hx.dT1, 1)} / ${fmt(hx.dT2, 1)} K`],
+            ['Flow arrangement', counter ? 'Counter-current' : 'Co-current'],
+        ];
+        if (tubeOD > 0 && tubeL > 0) rows.push(['Tubes needed (single pass)', `${Math.ceil(hx.area / (Math.PI * tubeOD * tubeL))} × ${fmt(tubeL, 2)} m`]);
+        return {
+            metrics: [
+                { label: 'Required area', value: fmt(hx.area, 2), unit: 'm²' },
+                { label: 'Heat duty', value: fmt(hx.duty_kW, 1), unit: 'kW' },
+                { label: 'LMTD', value: fmt(hx.lmtd, 2), unit: 'K' },
+            ],
+            rows,
+            notes: [
+                'U is an assumed overall coefficient. Typical ranges: water–water 800–1500, organic–water 250–750, gas–liquid 20–300 W/(m²·K).',
+                ...(counter ? [] : ['Counter-current flow gives a higher LMTD and a smaller exchanger for the same duty.']),
+            ],
+        };
+    }
+
+    if (m === 'flash') {
+        const comps = ([1, 2, 3, 4] as const)
+            .map(c => ({ c, z: num(`z${c}` as Key), K: num(`K${c}` as Key) }))
+            .filter(({ z, K }) => isFinite(z) || isFinite(K));
+        if (comps.length < 2) return { error: 'Enter z and K for at least two components.' };
+        if (!comps.every(({ z, K }) => z > 0 && K > 0)) return { error: 'Each component needs a feed fraction z > 0 and a K-value > 0.' };
+        const F = num('F');
+        if (!(F > 0)) return { error: 'Feed flow must be greater than 0.' };
+        const zSum = comps.reduce((sum, { z }) => sum + z, 0);
+        const z = comps.map(({ z }) => z / zSum);
+        const r = flash(z, comps.map(({ K }) => K));
+        const notes: string[] = [];
+        if (Math.abs(zSum - 1) > 1e-6) notes.push(`Feed fractions summed to ${zSum.toFixed(3)} and were normalised to 1.`);
+        if (r.phase === 'liquid') notes.push(`Σ zᵢKᵢ = ${r.bubble.toFixed(3)} ≤ 1, so the feed is below its bubble point and stays all liquid.`);
+        if (r.phase === 'vapour') notes.push(`Σ zᵢ/Kᵢ = ${r.dew.toFixed(3)} ≤ 1, so the feed is above its dew point and is all vapour.`);
+        return {
+            metrics: [
+                { label: 'Vapour fraction V/F', value: fmt(r.psi, 3), unit: '' },
+                { label: 'Vapour flow', value: fmt(F * r.psi, 2), unit: 'mol/s' },
+                { label: 'Liquid flow', value: fmt(F * (1 - r.psi), 2), unit: 'mol/s' },
+            ],
+            rows: comps.map(({ c, K }, idx) => [
+                `Component ${c} (K = ${K})`,
+                `z ${z[idx].toFixed(3)} · x ${r.x[idx].toFixed(3)} · y ${r.y[idx].toFixed(3)}`,
+            ] as [string, string]),
+            notes,
+        };
+    }
+
     const rho = num('rho'), mu = num('mu');
     const Q = i.flowMode === 'vol' ? num('Q') : num('mdot') / rho;
 
-    if (m !== 'cstr') {
+    if (m === 'pump' || m === 'pipe') {
         if (!(rho > 0)) return { error: 'Density must be greater than 0.' };
         if (!(mu > 0)) return { error: 'Viscosity must be greater than 0.' };
     }
+    if (i.flowMode === 'mass' && !(rho > 0)) return { error: 'Density must be greater than 0 to convert mass flow.' };
     if (!(Q > 0)) return { error: 'Flow rate must be greater than 0.' };
     const flowRows: [string, string][] = [['Volumetric flow', `${fmt(Q, 5)} m³/s  (${fmt(Q * 3600, 2)} m³/h)`]];
 
@@ -201,26 +273,54 @@ function calculate(m: Module, i: Inputs): Result {
         };
     }
 
+    if (m === 'tank') {
+        const hold = num('hold'), fill = num('fill'), LD = num('LD');
+        if (!(hold > 0)) return { error: 'Hold-up time must be greater than 0.' };
+        if (!(fill > 0 && fill <= 1)) return { error: 'Fill fraction must be between 0 and 1.' };
+        if (!(LD > 0)) return { error: 'L/D ratio must be greater than 0.' };
+        const t = tankSize(Q, hold * 60, fill, LD);
+        return {
+            metrics: [
+                { label: 'Vessel volume', value: fmt(t.vessel, 2), unit: 'm³' },
+                { label: 'Diameter', value: fmt(t.D, 2), unit: 'm' },
+                { label: 'Length / height', value: fmt(t.L, 2), unit: 'm' },
+            ],
+            rows: [
+                ...flowRows,
+                ['Liquid hold-up', `${fmt(t.liquid, 2)} m³ (${fmt(t.liquid * 1000, 0)} L)`],
+                ['Vessel volume', `${fmt(t.vessel * 1000, 0)} L`],
+                ['Empty space at fill fraction', `${fmt(t.vessel - t.liquid, 2)} m³`],
+            ],
+            notes: ['Common L/D ratios: about 1–1.5 for vertical storage tanks and 3–5 for horizontal drums. Heads are not included in the volume.'],
+        };
+    }
+
     const CA0 = num('CA0'), X = num('X'), n = num('n'), k = num('k');
     if (!(CA0 > 0)) return { error: 'Inlet concentration must be greater than 0.' };
     if (!(X > 0 && X < 1)) return { error: 'Conversion must be between 0 and 1 (exclusive).' };
     if (!(k > 0)) return { error: 'Rate constant k must be greater than 0.' };
     if (!(n >= 0)) return { error: 'Reaction order must be 0 or more.' };
     const r = cstrVolume(Q, CA0, X, k, n);
+    const p = pfrVolume(Q, CA0, X, k, n);
+    const time = (s: number) => s >= 3600 ? `${fmt(s / 3600, 2)} h` : s >= 60 ? `${fmt(s / 60, 2)} min` : `${fmt(s, 1)} s`;
     return {
         metrics: [
-            { label: 'Reactor volume', value: fmt(r.V), unit: 'm³' },
-            { label: 'Residence time', value: r.tau >= 3600 ? fmt(r.tau / 3600, 2) : fmt(r.tau / 60, 2), unit: r.tau >= 3600 ? 'h' : 'min' },
+            { label: 'CSTR volume', value: fmt(r.V), unit: 'm³' },
+            { label: 'PFR volume', value: fmt(p.V), unit: 'm³' },
             { label: 'Outlet CA', value: fmt(r.CAout, 1), unit: 'mol/m³' },
         ],
         rows: [
             ...flowRows,
             ['Molar feed FA0', `${fmt(r.FA0, 2)} mol/s`],
             ['Rate at outlet −rA', `${fmt(r.rAout)} mol/(m³·s)`],
-            ['Residence time τ', `${fmt(r.tau, 1)} s`],
-            ['Reactor volume', `${fmt(r.V * 1000, 1)} L`],
+            ['CSTR residence time τ', time(r.tau)],
+            ['PFR residence time τ', time(p.tau)],
+            ['CSTR / PFR volume ratio', n > 0 ? `${fmt(r.V / p.V, 2)} ×` : '1.00 × (zero order)'],
         ],
-        notes: ['Units of k depend on the reaction order: s⁻¹ for first order, m³/(mol·s) for second order.'],
+        notes: [
+            'For positive reaction orders a PFR needs less volume than a CSTR for the same conversion; the gap grows with conversion and order.',
+            'Units of k depend on the reaction order: s⁻¹ for first order, m³/(mol·s) for second order.',
+        ],
     };
 }
 
@@ -231,11 +331,12 @@ export default function SizingCalculator() {
     const f = { inputs, set };
     const result = calculate(module, inputs);
     const active = MODULES.find(m => m.id === module)!;
+    const usesFlow = module === 'pump' || module === 'pipe' || module === 'tank' || module === 'reactor';
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
             <div className="space-y-6">
-                <div role="tablist" aria-label="Calculator module" className="inline-flex rounded-lg border border-line bg-white p-1">
+                <div role="tablist" aria-label="Calculator module" className="flex flex-wrap gap-1 rounded-lg border border-line bg-white p-1 w-fit">
                     {MODULES.map(m => (
                         <button
                             key={m.id}
@@ -250,14 +351,14 @@ export default function SizingCalculator() {
                 </div>
                 <p className="text-body">{active.blurb}</p>
 
-                {module !== 'cstr' && (
+                {(module === 'pump' || module === 'pipe') && (
                     <Group title="Fluid">
                         <Field label="Density ρ" unit="kg/m³" name="rho" {...f} />
                         <Field label="Viscosity μ" unit="Pa·s" name="mu" {...f} hint="Water at 20 °C ≈ 0.001 Pa·s" />
                     </Group>
                 )}
 
-                <fieldset className="rounded-xl border border-line bg-white p-5">
+                {usesFlow && <fieldset className="rounded-xl border border-line bg-white p-5">
                     <legend className="px-1 text-sm font-semibold uppercase tracking-wider text-accent">Flow</legend>
                     <div className="flex gap-4 mb-4 text-sm">
                         {[['vol', 'Volumetric flow'], ['mass', 'Mass flow']].map(([value, text]) => (
@@ -272,10 +373,10 @@ export default function SizingCalculator() {
                             ? <Field label="Volumetric flow Q" unit="m³/s" name="Q" {...f} />
                             : <>
                                 <Field label="Mass flow ṁ" unit="kg/s" name="mdot" {...f} />
-                                {module === 'cstr' && <Field label="Density ρ" unit="kg/m³" name="rho" {...f} />}
+                                {(module === 'reactor' || module === 'tank') && <Field label="Density ρ" unit="kg/m³" name="rho" {...f} />}
                             </>}
                     </div>
-                </fieldset>
+                </fieldset>}
 
                 {module === 'pump' && (
                     <>
@@ -321,7 +422,68 @@ export default function SizingCalculator() {
                     </Group>
                 )}
 
-                {module === 'cstr' && (
+                {module === 'tank' && (
+                    <Group title="Vessel">
+                        <Field label="Hold-up time" unit="min" name="hold" {...f} hint="Surge drums are often 5–15 min; storage much longer" />
+                        <Field label="Fill fraction" unit="0–1" name="fill" {...f} hint="Typically 0.7–0.85" />
+                        <Field label="L/D ratio" name="LD" {...f} />
+                    </Group>
+                )}
+
+                {module === 'hx' && (
+                    <>
+                        <Group title="Hot stream">
+                            <Field label="Mass flow" unit="kg/s" name="mHot" {...f} />
+                            <Field label="Heat capacity cp" unit="kJ/(kg·K)" name="cpHot" {...f} hint="Water ≈ 4.18" />
+                            <Field label="Inlet temperature" unit="°C" name="ThIn" {...f} />
+                            <Field label="Outlet temperature" unit="°C" name="ThOut" {...f} />
+                        </Group>
+                        <Group title="Cold stream">
+                            <Field label="Mass flow" unit="kg/s" name="mCold" {...f} />
+                            <Field label="Heat capacity cp" unit="kJ/(kg·K)" name="cpCold" {...f} />
+                            <Field label="Inlet temperature" unit="°C" name="TcIn" {...f} hint="Outlet comes from the energy balance" />
+                        </Group>
+                        <fieldset className="rounded-xl border border-line bg-white p-5">
+                            <legend className="px-1 text-sm font-semibold uppercase tracking-wider text-accent">Exchanger</legend>
+                            <div className="flex gap-4 mb-4 text-sm">
+                                {[['counter', 'Counter-current'], ['co', 'Co-current']].map(([value, text]) => (
+                                    <label key={value} className="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="hxFlow" checked={inputs.hxFlow === value} onChange={() => set('hxFlow', value)} className="accent-[#0E7490]" />
+                                        {text}
+                                    </label>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <Field label="Overall coefficient U" unit="W/(m²·K)" name="U" {...f} />
+                                <Field label="Tube outer diameter" unit="mm" name="tubeOD" {...f} hint="1 in = 25.4 mm (optional)" />
+                                <Field label="Tube length" unit="m" name="tubeL" {...f} hint="16 ft = 4.88 m (optional)" />
+                            </div>
+                        </fieldset>
+                    </>
+                )}
+
+                {module === 'flash' && (
+                    <>
+                        <Group title="Feed">
+                            <Field label="Feed flow F" unit="mol/s" name="F" {...f} />
+                        </Group>
+                        <fieldset className="rounded-xl border border-line bg-white p-5">
+                            <legend className="px-1 text-sm font-semibold uppercase tracking-wider text-accent">Components</legend>
+                            <p className="text-xs text-muted mb-4">K = y/x at the drum temperature and pressure (e.g. from DePriester charts or Raoult&apos;s law, K = Psat/P). Leave a row blank to skip it.</p>
+                            <div className="space-y-3">
+                                {([1, 2, 3, 4] as const).map(c => (
+                                    <div key={c} className="grid grid-cols-[auto_1fr_1fr] gap-3 items-end">
+                                        <span className="pb-2.5 text-sm font-medium text-ink w-6">{c}</span>
+                                        <Field label="Feed mole fraction z" name={`z${c}` as Key} {...f} />
+                                        <Field label="K-value" name={`K${c}` as Key} {...f} />
+                                    </div>
+                                ))}
+                            </div>
+                        </fieldset>
+                    </>
+                )}
+
+                {module === 'reactor' && (
                     <Group title="Reaction">
                         <Field label="Inlet concentration CA0" unit="mol/m³" name="CA0" {...f} />
                         <Field label="Target conversion X" unit="0–1" name="X" {...f} />

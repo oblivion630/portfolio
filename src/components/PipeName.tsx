@@ -3,17 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import { shade } from '@/lib/color';
 
-// Block letters built as pipe spools on a 4-wide x 6-tall grid (M and W are 5 wide).
+// Block letters built as pipe spools, all on the same 4-wide x 6-tall grid.
 // Each run is a polyline of straight pipe; liquid flows through the runs in order.
 type Pt = [number, number];
 const LETTERS: Record<string, { w: number; runs: Pt[][] }> = {
     H: { w: 4, runs: [[[0, 0], [0, 6]], [[4, 0], [4, 6]], [[0, 3], [4, 3]]] },
     E: { w: 4, runs: [[[4, 0], [0, 0], [0, 6], [4, 6]], [[0, 3], [3, 3]]] },
-    K: { w: 4, runs: [[[0, 0], [0, 6]], [[4, 0], [0, 3], [4, 6]]] },
-    M: { w: 5, runs: [[[0, 6], [0, 0], [2.5, 3], [5, 0], [5, 6]]] },
+    K: { w: 4, runs: [[[0, 0], [0, 6]], [[4, 0], [4, 1], [0, 3], [4, 5], [4, 6]]] },
+    M: { w: 4, runs: [[[0, 6], [0, 0], [2, 3], [4, 0], [4, 6]]] },
     A: { w: 4, runs: [[[0, 6], [0, 0], [4, 0], [4, 6]], [[0, 3.2], [4, 3.2]]] },
     T: { w: 4, runs: [[[0, 0], [4, 0]], [[2, 0], [2, 6]]] },
-    W: { w: 5, runs: [[[0, 0], [0, 6], [2.5, 3], [5, 6], [5, 0]]] },
+    W: { w: 4, runs: [[[0, 0], [0, 6], [2, 3], [4, 6], [4, 0]]] },
     S: { w: 4, runs: [[[4, 0], [0, 0], [0, 3], [4, 3], [4, 6], [0, 6]]] },
 };
 
@@ -23,6 +23,11 @@ const BORE = 0.7;      // liquid channel
 const GAP = 2.3;       // space between letters
 const ROW_GAP = 2.6;   // space between the two words
 const PAD = 1.1;       // room for fittings at the edges
+const FITTING = 0.7;   // half-size of elbow/tee fittings
+const FLANGE_IN = 0.12; // how far a flange plate sits behind the pipe end
+// Open pipe ends are extended so their flange lines up with the outer edge of the elbows,
+// keeping every letter the same overall size whether it ends in a flange or a fitting.
+const END_EXTENSION = FITTING - FLANGE_IN;
 const FILL = 1.3;      // seconds to fill a letter
 const HOLD = 0.5;      // seconds full
 const DRAIN = 1.3;     // seconds to drain
@@ -47,7 +52,20 @@ function buildLetter(runs: Pt[][]) {
     const flanges: Flange[] = [];
     let total = 0;
 
-    runs.forEach((run, r) => {
+    const isTee = (end: Pt, r: number) => runs.some((other, o) => o !== r && other.some((p, k) =>
+        k < other.length - 1 && onSegment(end, p, other[k + 1])));
+    const extend = (end: Pt, next: Pt): Pt => {
+        const len = Math.hypot(end[0] - next[0], end[1] - next[1]);
+        return [end[0] + (end[0] - next[0]) / len * END_EXTENSION, end[1] + (end[1] - next[1]) / len * END_EXTENSION];
+    };
+
+    runs.forEach((original, r) => {
+        const n = original.length;
+        const openStart = !isTee(original[0], r);
+        const openEnd = !isTee(original[n - 1], r);
+        const run = original.map((p, i) =>
+            i === 0 && openStart ? extend(p, original[1]) : i === n - 1 && openEnd ? extend(p, original[n - 2]) : p);
+
         for (let i = 0; i < run.length - 1; i++) {
             const [a, b] = [run[i], run[i + 1]];
             const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
@@ -57,10 +75,8 @@ function buildLetter(runs: Pt[][]) {
         run.slice(1, -1).forEach(p => fittings.push(p)); // elbows
 
         // Open ends get a flange; ends that land on another run become a tee.
-        [[run[0], run[1]], [run[run.length - 1], run[run.length - 2]]].forEach(([end, next]) => {
-            const joinsOther = runs.some((other, o) => o !== r && other.some((p, k) =>
-                k < other.length - 1 && onSegment(end, p, other[k + 1])));
-            if (joinsOther) fittings.push(end);
+        ([[run[0], run[1], openStart], [run[n - 1], run[n - 2], openEnd]] as [Pt, Pt, boolean][]).forEach(([end, next, open]) => {
+            if (!open) fittings.push(end);
             else flanges.push({ x: end[0], y: end[1], angle: Math.atan2(next[1] - end[1], next[0] - end[0]) * 180 / Math.PI });
         });
     });
@@ -204,14 +220,14 @@ export default function PipeName({ name }: { name: string }) {
 
                         {/* Steel elbows and tees at every joint */}
                         {l.fittings.map(([x, y], i) => (
-                            <rect key={`f${i}`} x={x - 0.7} y={y - 0.7} width={1.4} height={1.4} rx={0.42}
+                            <rect key={`f${i}`} x={x - FITTING} y={y - FITTING} width={FITTING * 2} height={FITTING * 2} rx={0.42}
                                 fill="url(#name-steel-diag)" stroke="#1E293B" strokeWidth={0.08} />
                         ))}
 
                         {/* Flange plates on open ends, square to the pipe */}
                         {l.flanges.map((f, i) => (
                             <g key={`fl${i}`} transform={frame(f)}>
-                                <rect x={-0.12} y={-R - 0.32} width={0.42} height={(R + 0.32) * 2} rx={0.08}
+                                <rect x={-FLANGE_IN} y={-R - 0.32} width={0.42} height={(R + 0.32) * 2} rx={0.08}
                                     fill="url(#name-steel)" stroke="#1E293B" strokeWidth={0.06} />
                             </g>
                         ))}
