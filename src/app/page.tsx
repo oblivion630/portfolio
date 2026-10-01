@@ -6,11 +6,13 @@ import Experience from '@/components/Experience';
 import Skills from '@/components/Skills';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
+import BackgroundPipes from '@/components/BackgroundPipes';
 import { profile } from '@/data/profile';
 
 export default function Home() {
     return (
-        <main className="min-h-screen flex flex-col">
+        <main className="relative min-h-screen flex flex-col">
+            <BackgroundPipes />
             <Navbar profile={profile} />
             <Hero profile={profile} />
             <About profile={profile} />

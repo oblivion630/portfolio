@@ -19,3 +19,23 @@ body {
 section[id] {
   scroll-margin-top: 4.5rem;
 }
+
+/* Liquid moving through pipes (paths use pathLength="100") */
+@keyframes fluid-fill {
+  0%        { stroke-dashoffset: 100; }
+  45%, 60%  { stroke-dashoffset: 0; }
+  100%      { stroke-dashoffset: -100; }
+}
+
+@keyframes fluid-slug {
+  from { stroke-dashoffset: 22; }
+  to   { stroke-dashoffset: -100; }
+}
+
+.animate-fluid-fill {
+  animation: fluid-fill 2.6s ease-in-out forwards;
+}
+
+.animate-fluid-slug {
+  animation: fluid-slug var(--flow-duration, 3s) linear forwards;
+}

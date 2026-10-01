@@ -1,6 +1,7 @@
 import React from 'react';
 import { Download, Linkedin, Mail } from 'lucide-react';
 import { Profile } from '@/data/profile';
+import PipeName from './PipeName';
 
 export default function Hero({ profile }: { profile: Profile }) {
     return (
@@ -18,8 +19,9 @@ export default function Hero({ profile }: { profile: Profile }) {
                             Open to work · New grad roles · Available now
                         </div>
 
-                        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-ink">
-                            {profile.name}
+                        <h1>
+                            <span className="sr-only">{profile.name}</span>
+                            <PipeName name={profile.name} />
                         </h1>
                         <p className="text-xl md:text-2xl font-medium text-accent">
                             {profile.title}
