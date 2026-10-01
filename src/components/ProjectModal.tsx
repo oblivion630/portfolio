@@ -58,21 +58,20 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
                     {/* Body */}
                     <div className="p-6 space-y-8">
 
-                        {/* Problem / Solution / Results Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-blueprint-bg/50 p-4 rounded border border-blueprint-grid/50">
-                                <h4 className="font-mono text-blueprint-highlight text-sm mb-2">PROBLEM</h4>
-                                <p className="text-gray-300 text-sm">{project.problem || "N/A"}</p>
+                        {/* Overview, plus Problem / Solution / Results only where filled in */}
+                        <p className="text-gray-300 leading-relaxed">{project.description}</p>
+                        {(project.problem || project.solution || project.results) && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {[["PROBLEM", project.problem], ["SOLUTION", project.solution], ["RESULTS", project.results]]
+                                    .filter(([, text]) => text)
+                                    .map(([label, text]) => (
+                                        <div key={label} className="bg-blueprint-bg/50 p-4 rounded border border-blueprint-grid/50">
+                                            <h4 className="font-mono text-blueprint-highlight text-sm mb-2">{label}</h4>
+                                            <p className="text-gray-300 text-sm">{text}</p>
+                                        </div>
+                                    ))}
                             </div>
-                            <div className="bg-blueprint-bg/50 p-4 rounded border border-blueprint-grid/50">
-                                <h4 className="font-mono text-blueprint-highlight text-sm mb-2">SOLUTION</h4>
-                                <p className="text-gray-300 text-sm">{project.solution || project.description}</p>
-                            </div>
-                            <div className="bg-blueprint-bg/50 p-4 rounded border border-blueprint-grid/50">
-                                <h4 className="font-mono text-blueprint-highlight text-sm mb-2">RESULTS</h4>
-                                <p className="text-gray-300 text-sm">{project.results || "InProgress"}</p>
-                            </div>
-                        </div>
+                        )}
 
                         {/* Bullets */}
                         <div>

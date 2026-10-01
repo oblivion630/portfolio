@@ -7,9 +7,6 @@ export default function Footer() {
                 <p className="text-gray-500 font-mono text-sm">
                     © {new Date().getFullYear()} Hekmat Kawas. Designed with <span className="text-blueprint-accent">Next.js</span> & <span className="text-blueprint-accent">Tailwind</span>.
                 </p>
-                <div className="mt-2 text-[10px] text-gray-700 font-mono">
-                    SYSTEM_STATUS: NOMINAL // RENDER_TIME: {Date.now()}
-                </div>
             </div>
         </footer>
     );
