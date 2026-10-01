@@ -39,3 +39,52 @@ section[id] {
 .animate-fluid-slug {
   animation: fluid-slug var(--flow-duration, 3s) linear forwards;
 }
+
+/* Valve easter eggs */
+@keyframes drip {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  15%  { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(70px) scale(1); opacity: 0; }
+}
+
+@keyframes steam {
+  0%   { transform: translateY(0) scale(0.4); opacity: 0; }
+  20%  { opacity: 0.8; }
+  100% { transform: translateY(-55px) scale(2); opacity: 0; }
+}
+
+@keyframes handwheel {
+  0%, 100% { transform: scaleX(1); }
+  25%, 75% { transform: scaleX(0.15); }
+  50%      { transform: scaleX(-1); }
+}
+
+.animate-drip,
+.animate-steam,
+.animate-handwheel {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.animate-drip      { opacity: 0; animation: drip 1.2s ease-in 2; }
+.animate-steam     { opacity: 0; animation: steam 1.6s ease-out 2 both; }
+.animate-handwheel { animation: handwheel 0.7s ease-in-out; }
+
+/* Resume button tank */
+@keyframes wave {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes bubble {
+  0%   { transform: translateY(0); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateY(-36px); opacity: 0; }
+}
+
+.animate-wave { animation: wave 1.6s linear infinite; }
+.group:hover .group-hover\:animate-bubble { animation: bubble 1.4s ease-in infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-wave, .group:hover .group-hover\:animate-bubble { animation: none; }
+}

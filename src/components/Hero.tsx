@@ -2,6 +2,8 @@ import React from 'react';
 import { Download, Linkedin, Mail } from 'lucide-react';
 import { Profile } from '@/data/profile';
 import PipeName from './PipeName';
+import TankButton from './TankButton';
+import StatGauges from './StatGauges';
 
 export default function Hero({ profile }: { profile: Profile }) {
     return (
@@ -31,14 +33,13 @@ export default function Hero({ profile }: { profile: Profile }) {
                         </p>
 
                         <div className="flex flex-wrap gap-3 pt-2">
-                            <a
+                            <TankButton
                                 href={profile.resumeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-5 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-dark transition-colors"
+                                liquid="#164E63"
+                                className="flex items-center gap-2 px-5 py-3 rounded-md bg-accent text-white font-semibold"
                             >
                                 <Download size={18} /> Download Resume
-                            </a>
+                            </TankButton>
                             <a
                                 href={profile.linkedin}
                                 target="_blank"
@@ -66,16 +67,8 @@ export default function Hero({ profile }: { profile: Profile }) {
                     </figure>
                 </div>
 
-                {/* Key numbers */}
-                <dl className="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-px rounded-xl overflow-hidden border border-line bg-line">
-                    {profile.stats.map((stat) => (
-                        <div key={stat.label} className="bg-white p-5 md:p-6">
-                            <dt className="sr-only">{stat.label}</dt>
-                            <dd className="text-2xl md:text-3xl font-bold tracking-tight text-ink">{stat.value}</dd>
-                            <dd className="mt-1 text-sm leading-snug text-muted">{stat.label}</dd>
-                        </div>
-                    ))}
-                </dl>
+                {/* Key numbers on pressure gauges */}
+                <StatGauges stats={profile.stats} />
             </div>
         </section>
     );

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, FileText } from 'lucide-react';
 import { Profile } from '@/data/profile';
+import TankButton from './TankButton';
 
 const navLinks = [
     { name: 'About', href: '#about' },
@@ -38,14 +39,13 @@ export default function Navbar({ profile }: { profile: Profile }) {
                                 {link.name}
                             </a>
                         ))}
-                        <a
+                        <TankButton
                             href={profile.resumeUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-ink text-white hover:bg-accent transition-colors"
+                            liquid="#0E7490"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-ink text-white"
                         >
                             <FileText size={16} /> Resume
-                        </a>
+                        </TankButton>
                     </div>
 
                     {/* Mobile menu button */}
