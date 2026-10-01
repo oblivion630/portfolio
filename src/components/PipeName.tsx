@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { shade } from '@/lib/color';
 
 // Block letters drawn as pipe runs on a 4-wide x 6-tall grid (M and W are 5 wide).
 // Each string is one continuous pipe so liquid can flow through it end to end.
@@ -16,6 +17,8 @@ const LETTERS: Record<string, { w: number; runs: string[] }> = {
 };
 
 const FLUIDS = ["#14B8A6", "#F59E0B", "#8B5CF6", "#0EA5E9", "#F43F5E", "#84CC16"];
+// Tube layers from outside in: [colour, stroke width]
+const TUBE: [string, number][] = [["#0F172A", 1.45], ["#94A3B8", 1.22], ["#E2E8F0", 0.95], ["#F1F5F9", 0.72]];
 const GAP = 2.3;       // space between letters
 const ROW_GAP = 2.6;   // space between the two words
 const PAD = 0.8;       // room for the pipe wall at the edges
@@ -99,34 +102,47 @@ export default function PipeName({ name }: { name: string }) {
         >
             {letters.map(l => (
                 <g key={l.key} transform={`translate(${l.x} ${l.y})`}>
-                    {/* Pipe wall, then hollow bore */}
-                    {l.runs.map((d, i) => <path key={`w${i}`} d={d} stroke="#0F172A" strokeWidth={1.35} />)}
-                    {l.runs.map((d, i) => <path key={`b${i}`} d={d} stroke="#E2E8F0" strokeWidth={0.8} />)}
-                    {/* Flanges at the pipe ends */}
-                    {l.ends.map(([x, y], i) => <circle key={`f${i}`} cx={x} cy={y} r={0.85} fill="#0F172A" />)}
+                    {/* Tube built up in layers: dark outline, glass wall shading, then the empty bore */}
+                    {TUBE.map(([color, width], layer) =>
+                        l.runs.map((d, i) => <path key={`${layer}-${i}`} d={d} stroke={color} strokeWidth={width} />))}
                 </g>
             ))}
 
-            {/* Liquid: fills a letter from its inlet, holds, then drains out */}
+            {/* Liquid: fills a letter from its inlet, holds, then drains out.
+                Three strokes in step give it depth: deep edge, body colour, and a lit surface. */}
             {flows.map(f => {
                 const l = letters[f.letter];
+                const layers: [string, number][] = [[shade(f.color, -0.35), 0.72], [f.color, 0.5], [shade(f.color, 0.55), 0.16]];
                 return (
                     <g key={f.id} transform={`translate(${l.x} ${l.y})`}>
-                        {l.runs.map((d, i) => (
+                        {layers.map(([color, width], layer) => l.runs.map((d, i) => (
                             <path
-                                key={i}
+                                key={`${layer}-${i}`}
                                 d={d}
                                 pathLength={100}
-                                stroke={f.color}
-                                strokeWidth={0.8}
+                                stroke={color}
+                                strokeWidth={width}
                                 strokeDasharray="100 100"
                                 className="animate-fluid-fill"
-                                onAnimationEnd={i === 0 ? () => done(f.id) : undefined}
+                                onAnimationEnd={layer === 0 && i === 0 ? () => done(f.id) : undefined}
                             />
-                        ))}
+                        )))}
                     </g>
                 );
             })}
+
+            {/* Glass reflection over the liquid, then steel flanges at the pipe ends */}
+            {letters.map(l => (
+                <g key={`g${l.key}`} transform={`translate(${l.x} ${l.y})`}>
+                    {l.runs.map((d, i) => <path key={i} d={d} stroke="#fff" strokeWidth={0.1} opacity={0.8} transform="translate(-0.22 -0.22)" />)}
+                    {l.ends.map(([x, y], i) => (
+                        <g key={`f${i}`}>
+                            <circle cx={x} cy={y} r={0.88} fill="#334155" />
+                            <circle cx={x - 0.2} cy={y - 0.2} r={0.42} fill="#94A3B8" />
+                        </g>
+                    ))}
+                </g>
+            ))}
         </svg>
     );
 }

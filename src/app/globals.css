@@ -88,3 +88,13 @@ section[id] {
 @media (prefers-reduced-motion: reduce) {
   .animate-wave, .group:hover .group-hover\:animate-bubble { animation: none; }
 }
+
+/* Liquid slug travelling along a pipe (moves in the pipe's own frame) */
+@keyframes slug-move {
+  from { transform: translateX(0); }
+  to   { transform: translateX(var(--slug-travel)); }
+}
+
+.animate-slug {
+  animation: slug-move var(--flow-duration, 3s) cubic-bezier(0.35, 0, 0.65, 1) forwards;
+}
