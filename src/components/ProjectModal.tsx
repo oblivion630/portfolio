@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, FileText, CheckCircle } from 'lucide-react';
+import { X, FileText, CheckCircle } from 'lucide-react';
 import { Project } from '@/data/profile';
 
 interface ProjectModalProps {
@@ -24,105 +23,88 @@ export default function ProjectModal({ project, onClose }: ProjectModalProps) {
     if (!project) return null;
 
     return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-blueprint-bg/80 backdrop-blur-sm"
-                onClick={onClose}
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="project-title"
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-xl shadow-2xl"
             >
-                <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-blueprint-card border border-blueprint-grid w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl relative"
-                >
-                    {/* Header */}
-                    <div className="sticky top-0 bg-blueprint-card/95 backdrop-blur z-10 p-6 border-b border-blueprint-grid flex justify-between items-start">
-                        <div>
-                            <div className="font-mono text-blueprint-accent text-xs mb-2 uppercase tracking-wide">
-                                {project.category} // ID: {project.id}
-                            </div>
-                            <h2 className="text-2xl font-bold text-white">{project.title}</h2>
+                {/* Header */}
+                <div className="sticky top-0 bg-white/95 backdrop-blur p-6 border-b border-line flex justify-between items-start gap-4">
+                    <div>
+                        <div className="text-xs font-semibold uppercase tracking-wider text-accent mb-1">{project.category}</div>
+                        <h2 id="project-title" className="text-2xl font-bold text-ink">{project.title}</h2>
+                    </div>
+                    <button onClick={onClose} aria-label="Close" className="p-2 -mr-2 text-muted hover:text-ink rounded-full hover:bg-paper">
+                        <X size={22} />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="p-6 space-y-8">
+                    <p className="text-body leading-relaxed">{project.description}</p>
+
+                    {(project.problem || project.solution || project.results) && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[["Problem", project.problem], ["Solution", project.solution], ["Results", project.results]]
+                                .filter(([, text]) => text)
+                                .map(([label, text]) => (
+                                    <div key={label} className="bg-paper p-4 rounded-lg border border-line">
+                                        <h4 className="text-sm font-semibold text-ink mb-2">{label}</h4>
+                                        <p className="text-body text-sm">{text}</p>
+                                    </div>
+                                ))}
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
-                        >
-                            <X size={24} />
-                        </button>
+                    )}
+
+                    <div>
+                        <h3 className="font-semibold text-ink mb-4 flex items-center gap-2">
+                            <CheckCircle size={18} className="text-accent" />
+                            Key achievements
+                        </h3>
+                        <ul className="space-y-3">
+                            {project.bullets.map((bullet, idx) => (
+                                <li key={idx} className="flex gap-3 text-body leading-relaxed">
+                                    <span className="mt-2.5 h-1 w-1 rounded-full bg-accent flex-shrink-0" />
+                                    <span>{bullet}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
 
-                    {/* Body */}
-                    <div className="p-6 space-y-8">
-
-                        {/* Overview, plus Problem / Solution / Results only where filled in */}
-                        <p className="text-gray-300 leading-relaxed">{project.description}</p>
-                        {(project.problem || project.solution || project.results) && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {[["PROBLEM", project.problem], ["SOLUTION", project.solution], ["RESULTS", project.results]]
-                                    .filter(([, text]) => text)
-                                    .map(([label, text]) => (
-                                        <div key={label} className="bg-blueprint-bg/50 p-4 rounded border border-blueprint-grid/50">
-                                            <h4 className="font-mono text-blueprint-highlight text-sm mb-2">{label}</h4>
-                                            <p className="text-gray-300 text-sm">{text}</p>
-                                        </div>
-                                    ))}
-                            </div>
-                        )}
-
-                        {/* Bullets */}
-                        <div>
-                            <h3 className="text-lg font-mono font-bold text-white mb-4 flex items-center gap-2">
-                                <CheckCircle size={20} className="text-blueprint-accent" />
-                                Key Achievements
-                            </h3>
-                            <ul className="space-y-3">
-                                {project.bullets.map((bullet, idx) => (
-                                    <li key={idx} className="flex gap-3 text-gray-300">
-                                        <span className="text-blueprint-grid mt-1">▹</span>
-                                        <span>{bullet}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                    <div>
+                        <h3 className="font-semibold text-ink mb-3">Tools & methods</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {project.tools.map(tool => (
+                                <span key={tool} className="px-3 py-1 bg-accent-soft text-accent-dark text-sm rounded-full">
+                                    {tool}
+                                </span>
+                            ))}
                         </div>
-
-                        {/* Tools */}
-                        <div>
-                            <h3 className="text-lg font-mono font-bold text-white mb-4">Tech Specs</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {project.tools.map(tool => (
-                                    <span key={tool} className="px-3 py-1 bg-blueprint-grid/20 border border-blueprint-grid text-blueprint-accent text-sm font-mono rounded">
-                                        {tool}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Links */}
-                        {project.links && project.links.length > 0 && (
-                            <div className="pt-6 border-t border-blueprint-grid">
-                                <div className="flex gap-4">
-                                    {project.links.map(link => (
-                                        <a
-                                            key={link.label}
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-blueprint-highlight hover:underline"
-                                        >
-                                            <ExternalLink size={16} /> {link.label}
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                     </div>
-                </motion.div>
-            </motion.div>
-        </AnimatePresence>
+
+                    {project.links && project.links.length > 0 && (
+                        <div className="pt-6 border-t border-line flex flex-wrap gap-3">
+                            {project.links.map(link => (
+                                <a
+                                    key={link.label}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-4 py-2 rounded-md bg-accent text-white font-semibold text-sm hover:bg-accent-dark transition-colors"
+                                >
+                                    <FileText size={16} /> {link.label}
+                                </a>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }

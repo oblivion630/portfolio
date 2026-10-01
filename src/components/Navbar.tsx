@@ -1,109 +1,86 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Menu, X, Settings } from 'lucide-react';
+import { Menu, X, FileText } from 'lucide-react';
+import { Profile } from '@/data/profile';
 
-interface NavbarProps {
-    animated: boolean;
-    setAnimated: (val: boolean) => void;
-}
+const navLinks = [
+    { name: 'About', href: '#about' },
+    { name: 'Experience', href: '#experience' },
+    { name: 'Projects', href: '#projects' },
+    { name: 'Skills', href: '#skills' },
+    { name: 'Contact', href: '#contact' },
+];
 
-export default function Navbar({ animated, setAnimated }: NavbarProps) {
+export default function Navbar({ profile }: { profile: Profile }) {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
-        };
+        const handleScroll = () => setScrolled(window.scrollY > 10);
+        handleScroll();
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const navLinks = [
-        { name: 'About', href: '#about' },
-        { name: 'Projects', href: '#projects' },
-        { name: 'Experience', href: '#experience' },
-        { name: 'Skills', href: '#skills' },
-        { name: 'Contact', href: '#contact' },
-    ];
-
     return (
-        <nav
-            className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-blueprint-bg/90 backdrop-blur-md border-b border-blueprint-grid' : 'bg-transparent'
-                }`}
-        >
-            <div className="max-w-7xl mx-auto px-6 max-sm:px-4">
+        <nav className={`fixed top-0 w-full z-50 transition-colors duration-200 ${scrolled || isOpen ? 'bg-white/90 backdrop-blur-md border-b border-line' : 'bg-transparent'}`}>
+            <div className="max-w-6xl mx-auto px-4 sm:px-6">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo / Name */}
-                    <div className="flex-shrink-0">
-                        <Link href="/" className="font-mono font-bold text-xl tracking-tighter text-blueprint-accent">
-                            <span className="text-blueprint-highlight">P-FD</span>.PROFILE
-                        </Link>
-                    </div>
+                    <a href="#" className="font-bold text-lg tracking-tight text-ink">
+                        {profile.name}
+                    </a>
 
                     {/* Desktop Nav */}
-                    <div className="hidden md:block">
-                        <div className="ml-10 flex items-baseline space-x-8">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.name}
-                                    href={link.href}
-                                    className="text-gray-300 hover:text-blueprint-highlight transition-colors font-mono text-sm uppercase tracking-wide"
-                                >
-                                    {link.name}
-                                </Link>
-                            ))}
-
-                            {/* Toggle Animation */}
-                            <button
-                                onClick={() => setAnimated(!animated)}
-                                className={`flex items-center gap-2 px-3 py-1 rounded border border-blueprint-grid text-xs font-mono transition-all ${animated ? 'bg-blueprint-accent/10 text-blueprint-accent' : 'text-gray-500'
-                                    }`}
-                                title={animated ? "Disable Animations" : "Enable Animations"}
-                            >
-                                <Settings size={14} className={animated ? "animate-spin" : ""} />
-                                {animated ? "LIVE" : "STATIC"}
-                            </button>
-                        </div>
+                    <div className="hidden md:flex items-center gap-8">
+                        {navLinks.map((link) => (
+                            <a key={link.name} href={link.href} className="text-sm font-medium text-body hover:text-accent transition-colors">
+                                {link.name}
+                            </a>
+                        ))}
+                        <a
+                            href={profile.resumeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-ink text-white hover:bg-accent transition-colors"
+                        >
+                            <FileText size={16} /> Resume
+                        </a>
                     </div>
 
                     {/* Mobile menu button */}
-                    <div className="-mr-2 flex md:hidden">
-                        <button
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-blueprint-grid focus:outline-none"
-                        >
-                            {isOpen ? <X size={24} /> : <Menu size={24} />}
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        aria-label={isOpen ? "Close menu" : "Open menu"}
+                        className="md:hidden p-2 -mr-2 rounded-md text-ink hover:bg-line"
+                    >
+                        {isOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
                 </div>
             </div>
 
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden bg-blueprint-bg border-b border-blueprint-grid">
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <div className="md:hidden border-t border-line bg-white">
+                    <div className="px-4 py-3 space-y-1">
                         {navLinks.map((link) => (
-                            <Link
+                            <a
                                 key={link.name}
                                 href={link.href}
                                 onClick={() => setIsOpen(false)}
-                                className="text-gray-300 hover:text-blueprint-highlight block px-3 py-2 rounded-md text-base font-medium font-mono"
+                                className="block px-3 py-2 rounded-md text-base font-medium text-body hover:bg-paper hover:text-accent"
                             >
                                 {link.name}
-                            </Link>
+                            </a>
                         ))}
-                        <button
-                            onClick={() => {
-                                setAnimated(!animated);
-                                setIsOpen(false);
-                            }}
-                            className="w-full text-left text-gray-300 hover:text-blueprint-highlight block px-3 py-2 rounded-md text-base font-medium font-mono"
+                        <a
+                            href={profile.resumeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block px-3 py-2 rounded-md text-base font-semibold text-accent"
                         >
-                            {animated ? "Disable Animations" : "Enable Animations"}
-                        </button>
+                            Download Resume
+                        </a>
                     </div>
                 </div>
             )}

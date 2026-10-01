@@ -30,6 +30,7 @@ export interface Profile {
     email: string;
     linkedin: string;
     resumeUrl: string;
+    stats: { value: string; label: string }[];
     about: {
         summary: string;
         highlights: string[];
@@ -56,6 +57,12 @@ export const profile: Profile = {
     email: "kawas.hekmat@gmail.com",
     linkedin: "https://linkedin.com/in/hekmat-kawas/",
     resumeUrl: "/resume.pdf",
+    stats: [
+        { value: "$725K+", label: "recurring revenue from 75+ formulations taken to production" },
+        { value: "89 → 91%", label: "Mg extraction after optimizing a pilot leach circuit" },
+        { value: "23%", label: "faster filtration from a redesigned filter press" },
+        { value: "15,000 t/yr", label: "lithium recycling plant designed (capstone)" },
+    ],
     about: {
         summary: "Chemical Engineering student at Toronto Metropolitan University completing my final course (graduating Dec 2026) and available now for full-time new graduate roles. Currently working as a Junior Metallurgist in process research at Ortech Inc. Hands-on experience optimizing pilot-scale leach circuits, scaling extraction processes, and developing powder coating formulations in R&D. Skilled in mass and energy balances, equipment and piping sizing, and tools like Aspen Plus, SolidWorks, and Python.",
         highlights: [

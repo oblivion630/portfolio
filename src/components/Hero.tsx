@@ -1,70 +1,79 @@
-"use client";
-
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Download, Linkedin, Mail, ExternalLink } from 'lucide-react';
+import { Download, Linkedin, Mail } from 'lucide-react';
 import { Profile } from '@/data/profile';
 
-export default function Hero({ profile, animated }: { profile: Profile; animated: boolean }) {
-
+export default function Hero({ profile }: { profile: Profile }) {
     return (
-        <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
-            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full z-10">
+        <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 bg-white bg-grid-paper">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 items-center">
 
-                {/* Left: Content */}
-                <div className="flex flex-col space-y-6">
-                    <div className="inline-flex items-center space-x-2 text-blueprint-highlight">
-                        <span className="w-2 h-2 bg-current rounded-full animate-pulse" />
-                        <span className="font-mono text-sm tracking-widest uppercase">Open to Work · New Grad Roles</span>
+                    {/* Left: Pitch */}
+                    <div className="space-y-6">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium">
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-ping" />
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                            </span>
+                            Open to work · New grad roles · Available now
+                        </div>
+
+                        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-ink">
+                            {profile.name}
+                        </h1>
+                        <p className="text-xl md:text-2xl font-medium text-accent">
+                            {profile.title}
+                        </p>
+                        <p className="max-w-xl text-lg leading-relaxed text-body">
+                            {profile.tagline}
+                        </p>
+
+                        <div className="flex flex-wrap gap-3 pt-2">
+                            <a
+                                href={profile.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-5 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-dark transition-colors"
+                            >
+                                <Download size={18} /> Download Resume
+                            </a>
+                            <a
+                                href={profile.linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-5 py-3 rounded-md border border-line bg-white text-ink font-medium hover:border-accent hover:text-accent transition-colors"
+                            >
+                                <Linkedin size={18} /> LinkedIn
+                            </a>
+                            <a
+                                href={`mailto:${profile.email}`}
+                                className="flex items-center gap-2 px-5 py-3 rounded-md border border-line bg-white text-ink font-medium hover:border-accent hover:text-accent transition-colors"
+                            >
+                                <Mail size={18} /> Email
+                            </a>
+                        </div>
                     </div>
 
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
-                        {profile.name}
-                    </h1>
-                    <h2 className="text-xl md:text-2xl font-mono text-gray-400">
-                        {profile.title}
-                    </h2>
-                    <p className="max-w-lg text-lg text-gray-300 border-l-2 border-blueprint-accent pl-4">
-                        {profile.tagline}
-                    </p>
-
-                    <div className="flex flex-wrap gap-4 pt-4">
-                        <a
-                            href={profile.resumeUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-6 py-3 bg-blueprint-accent text-blueprint-bg font-bold rounded hover:bg-blueprint-highlight transition-all"
-                        >
-                            <Download size={18} /> Resume
-                        </a>
-                        <a
-                            href={profile.linkedin}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-6 py-3 border border-blueprint-grid text-gray-300 hover:border-blueprint-accent hover:text-white transition-all rounded"
-                        >
-                            <Linkedin size={18} /> LinkedIn
-                        </a>
-                        <a
-                            href={`mailto:${profile.email}`}
-                            className="flex items-center gap-2 px-6 py-3 border border-blueprint-grid text-gray-300 hover:border-blueprint-accent hover:text-white transition-all rounded"
-                        >
-                            <Mail size={18} /> Email
-                        </a>
-                    </div>
+                    {/* Right: Process flow image */}
+                    <figure className="rounded-xl overflow-hidden border border-slate-800 bg-[#0B1626] shadow-xl">
+                        <img
+                            src="/hero-pfd-final.jpg"
+                            alt="Process flow diagram illustration"
+                            className="w-full h-auto"
+                        />
+                    </figure>
                 </div>
 
-                {/* Right: Complex PFD Image */}
-                <div className="relative h-[400px] lg:h-[500px] w-full flex items-center justify-center border border-blueprint-grid/30 rounded-lg bg-blueprint-card/20 backdrop-blur-sm tech-border p-2 overflow-hidden group">
-                    <img
-                        src="/hero-pfd-final.jpg"
-                        alt="Process Flow Diagram"
-                        className="w-full h-full object-contain opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-                    />
-                    <div className="absolute top-4 right-4 text-[10px] font-mono text-blueprint-highlight/80 border border-blueprint-highlight/30 px-2 py-1 bg-black/40 backdrop-blur-md">
-                        SYSTEM_ID: PFD-8X-2026
-                    </div>
-                </div>
+                {/* Key numbers */}
+                <dl className="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-px rounded-xl overflow-hidden border border-line bg-line">
+                    {profile.stats.map((stat) => (
+                        <div key={stat.label} className="bg-white p-5 md:p-6">
+                            <dt className="sr-only">{stat.label}</dt>
+                            <dd className="text-2xl md:text-3xl font-bold tracking-tight text-ink">{stat.value}</dd>
+                            <dd className="mt-1 text-sm leading-snug text-muted">{stat.label}</dd>
+                        </div>
+                    ))}
+                </dl>
             </div>
         </section>
     );

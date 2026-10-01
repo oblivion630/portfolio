@@ -1,22 +1,29 @@
 import React from 'react';
 import Section from './Section';
 import { Profile } from '@/data/profile';
-import { MapPin, GraduationCap, Calendar, Zap } from 'lucide-react';
+import { MapPin, GraduationCap, Briefcase, Target } from 'lucide-react';
 
 export default function About({ profile }: { profile: Profile }) {
-    return (
-        <Section id="about" title="About">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Main Text */}
-                <div className="md:col-span-2 space-y-6 text-gray-300 leading-relaxed font-light">
-                    <p className="text-lg">{profile.about.summary}</p>
+    const current = profile.experience[0];
+    const facts = [
+        { icon: GraduationCap, label: profile.about.education.degree, sub: `${profile.about.education.school} · ${profile.about.education.graduation}` },
+        { icon: Briefcase, label: current.role, sub: `${current.company} · ${current.date}` },
+        { icon: MapPin, label: "Location", sub: profile.location },
+        { icon: Target, label: "Interests", sub: "Hydrometallurgy, Battery Recycling, Process Design, Process Safety" },
+    ];
 
-                    <div className="space-y-2">
-                        <h3 className="font-mono text-blueprint-highlight text-sm uppercase mb-3">Core Competencies</h3>
+    return (
+        <Section id="about" title="About" eyebrow="Profile">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className="lg:col-span-2 space-y-8">
+                    <p className="text-lg leading-relaxed text-body">{profile.about.summary}</p>
+
+                    <div>
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-ink mb-4">Core competencies</h3>
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {profile.about.highlights.map((item, idx) => (
-                                <li key={idx} className="flex items-start gap-2 text-sm">
-                                    <div className="mt-1.5 w-1.5 h-1.5 bg-blueprint-accent rounded-sm" />
+                            {profile.about.highlights.map((item) => (
+                                <li key={item} className="flex items-start gap-3 p-3 rounded-lg bg-white border border-line text-sm text-body">
+                                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent flex-shrink-0" />
                                     {item}
                                 </li>
                             ))}
@@ -24,34 +31,17 @@ export default function About({ profile }: { profile: Profile }) {
                     </div>
                 </div>
 
-                {/* Quick Specs Card */}
-                <div className="bg-blueprint-card/50 border border-blueprint-grid p-6 rounded-lg backdrop-blur-sm h-fit">
-                    <h3 className="font-mono text-white text-lg mb-4 border-b border-blueprint-grid pb-2"> // SPEC_SHEET</h3>
-
-                    <div className="space-y-4 font-mono text-sm">
-                        <div className="flex items-center gap-3 text-gray-400">
-                            <MapPin size={16} className="text-blueprint-accent" />
-                            <span>{profile.location}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-gray-400">
-                            <GraduationCap size={16} className="text-blueprint-accent" />
+                <aside className="rounded-xl bg-white border border-line p-6 h-fit space-y-5">
+                    {facts.map(({ icon: Icon, label, sub }) => (
+                        <div key={label} className="flex gap-3">
+                            <Icon size={18} className="text-accent mt-0.5 flex-shrink-0" />
                             <div>
-                                <div className="text-white">{profile.about.education.degree}</div>
-                                <div className="text-xs text-gray-500">{profile.about.education.school}</div>
+                                <div className="font-medium text-ink">{label}</div>
+                                <div className="text-sm text-muted">{sub}</div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 text-gray-400">
-                            <Calendar size={16} className="text-blueprint-accent" />
-                            <span>{profile.about.education.graduation}</span>
-                        </div>
-                        <div className="flex items-start gap-3 text-gray-400 pt-2 border-t border-blueprint-grid/50 mt-2">
-                            <Zap size={16} className="text-blueprint-highlight mt-1" />
-                            <div className="text-xs">
-                                Interests: Hydrometallurgy, Battery Recycling, Process Design, Process Safety
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    ))}
+                </aside>
             </div>
         </Section>
     );

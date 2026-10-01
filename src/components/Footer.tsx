@@ -1,12 +1,12 @@
 import React from 'react';
+import { Profile } from '@/data/profile';
 
-export default function Footer() {
+export default function Footer({ profile }: { profile: Profile }) {
     return (
-        <footer className="py-8 border-t border-blueprint-grid bg-blueprint-bg">
-            <div className="max-w-7xl mx-auto px-6 text-center">
-                <p className="text-gray-500 font-mono text-sm">
-                    © {new Date().getFullYear()} Hekmat Kawas. Designed with <span className="text-blueprint-accent">Next.js</span> & <span className="text-blueprint-accent">Tailwind</span>.
-                </p>
+        <footer className="py-8 border-t border-line bg-white">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between gap-2 text-sm text-muted">
+                <p>© {new Date().getFullYear()} {profile.name}</p>
+                <p>{profile.location} · <a href={`mailto:${profile.email}`} className="hover:text-accent">{profile.email}</a></p>
             </div>
         </footer>
     );

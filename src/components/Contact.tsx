@@ -11,8 +11,8 @@ export default function Contact({ profile }: { profile: Profile }) {
     ];
 
     return (
-        <Section id="contact" title="Contact">
-            <p className="text-gray-300 text-lg mb-8 max-w-2xl">
+        <Section id="contact" title="Let's talk" eyebrow="Contact">
+            <p className="text-lg text-body mb-8 max-w-2xl">
                 Open to full-time new graduate roles in process engineering, metallurgy, and R&D, and available to start now.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -21,14 +21,14 @@ export default function Contact({ profile }: { profile: Profile }) {
                         key={label}
                         href={href}
                         {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                        className="flex items-center gap-4 p-4 bg-blueprint-card border border-blueprint-grid rounded hover:border-blueprint-accent transition-all group"
+                        className="flex items-center gap-4 p-5 bg-white border border-line rounded-xl hover:border-accent hover:shadow-md transition-all group"
                     >
-                        <div className="w-10 h-10 flex items-center justify-center bg-blueprint-bg border border-blueprint-grid rounded-full text-blueprint-accent">
+                        <div className="w-11 h-11 flex items-center justify-center rounded-full bg-accent-soft text-accent flex-shrink-0">
                             <Icon size={20} />
                         </div>
-                        <div>
-                            <div className="text-xs font-mono text-gray-500 uppercase">{label}</div>
-                            <div className="text-white group-hover:text-blueprint-highlight">{value}</div>
+                        <div className="min-w-0">
+                            <div className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</div>
+                            <div className="font-medium text-ink group-hover:text-accent truncate">{value}</div>
                         </div>
                     </a>
                 ))}
