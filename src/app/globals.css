@@ -20,26 +20,6 @@ section[id] {
   scroll-margin-top: 4.5rem;
 }
 
-/* Liquid moving through pipes (paths use pathLength="100") */
-@keyframes fluid-fill {
-  0%        { stroke-dashoffset: 100; }
-  45%, 60%  { stroke-dashoffset: 0; }
-  100%      { stroke-dashoffset: -100; }
-}
-
-@keyframes fluid-slug {
-  from { stroke-dashoffset: 22; }
-  to   { stroke-dashoffset: -100; }
-}
-
-.animate-fluid-fill {
-  animation: fluid-fill 2.6s ease-in-out forwards;
-}
-
-.animate-fluid-slug {
-  animation: fluid-slug var(--flow-duration, 3s) linear forwards;
-}
-
 /* Valve easter eggs */
 @keyframes drip {
   0%   { transform: translateY(0) scale(0.6); opacity: 0; }
@@ -97,4 +77,15 @@ section[id] {
 
 .animate-slug {
   animation: slug-move var(--flow-duration, 3s) cubic-bezier(0.35, 0, 0.65, 1) forwards;
+}
+
+/* Pipe-name liquid: each spool fills from its inlet, then drains out its outlet (--len = spool length) */
+@keyframes pipe-fill {
+  from { transform: translateX(calc(var(--len) * -1)); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes pipe-drain {
+  from { transform: translateX(0); }
+  to   { transform: translateX(var(--len)); }
 }

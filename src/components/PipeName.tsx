@@ -3,43 +3,71 @@
 import React, { useEffect, useState } from 'react';
 import { shade } from '@/lib/color';
 
-// Block letters drawn as pipe runs on a 4-wide x 6-tall grid (M and W are 5 wide).
-// Each string is one continuous pipe so liquid can flow through it end to end.
-const LETTERS: Record<string, { w: number; runs: string[] }> = {
-    H: { w: 4, runs: ["M0 0V6", "M4 0V6", "M0 3H4"] },
-    E: { w: 4, runs: ["M4 0H0V6H4", "M0 3H3"] },
-    K: { w: 4, runs: ["M0 0V6", "M4 0L0.8 3L4 6"] },
-    M: { w: 5, runs: ["M0 6V0L2.5 3L5 0V6"] },
-    A: { w: 4, runs: ["M0 6V1.5Q0 0 1.5 0H2.5Q4 0 4 1.5V6", "M0 3.5H4"] },
-    T: { w: 4, runs: ["M0 0H4", "M2 0V6"] },
-    W: { w: 5, runs: ["M0 0V6L2.5 3L5 6V0"] },
-    S: { w: 4, runs: ["M4 0H1Q0 0 0 1V2Q0 3 1 3H3Q4 3 4 4V5Q4 6 3 6H0"] },
+// Block letters built as pipe spools on a 4-wide x 6-tall grid (M and W are 5 wide).
+// Each run is a polyline of straight pipe; liquid flows through the runs in order.
+type Pt = [number, number];
+const LETTERS: Record<string, { w: number; runs: Pt[][] }> = {
+    H: { w: 4, runs: [[[0, 0], [0, 6]], [[4, 0], [4, 6]], [[0, 3], [4, 3]]] },
+    E: { w: 4, runs: [[[4, 0], [0, 0], [0, 6], [4, 6]], [[0, 3], [3, 3]]] },
+    K: { w: 4, runs: [[[0, 0], [0, 6]], [[4, 0], [0, 3], [4, 6]]] },
+    M: { w: 5, runs: [[[0, 6], [0, 0], [2.5, 3], [5, 0], [5, 6]]] },
+    A: { w: 4, runs: [[[0, 6], [0, 0], [4, 0], [4, 6]], [[0, 3.2], [4, 3.2]]] },
+    T: { w: 4, runs: [[[0, 0], [4, 0]], [[2, 0], [2, 6]]] },
+    W: { w: 5, runs: [[[0, 0], [0, 6], [2.5, 3], [5, 6], [5, 0]]] },
+    S: { w: 4, runs: [[[4, 0], [0, 0], [0, 3], [4, 3], [4, 6], [0, 6]]] },
 };
 
 const FLUIDS = ["#14B8A6", "#F59E0B", "#8B5CF6", "#0EA5E9", "#F43F5E", "#84CC16"];
-// Tube layers from outside in: [colour, stroke width]
-const TUBE: [string, number][] = [["#0F172A", 1.45], ["#94A3B8", 1.22], ["#E2E8F0", 0.95], ["#F1F5F9", 0.72]];
+const R = 0.62;        // pipe outer radius
+const BORE = 0.7;      // liquid channel
 const GAP = 2.3;       // space between letters
 const ROW_GAP = 2.6;   // space between the two words
-const PAD = 0.8;       // room for the pipe wall at the edges
+const PAD = 1.1;       // room for fittings at the edges
+const FILL = 1.3;      // seconds to fill a letter
+const HOLD = 0.5;      // seconds full
+const DRAIN = 1.3;     // seconds to drain
 
-type Letter = { key: string; x: number; y: number; runs: string[]; ends: [number, number][] };
+type Seg = { x: number; y: number; angle: number; length: number; start: number }; // start: distance along the letter's flow path
+type Flange = { x: number; y: number; angle: number };
+type Letter = { key: string; x: number; y: number; segs: Seg[]; total: number; fittings: Pt[]; flanges: Flange[] };
 
-// Endpoints of each run get a flange so the letters read as pipe spools.
-function runEnds(d: string): [number, number][] {
-    const nums = d.match(/-?\d*\.?\d+/g)!.map(Number);
-    const start: [number, number] = [nums[0], nums[1]];
-    // Walk the path to find where it ends (handles M, H, V, L and Q commands).
-    let x = nums[0], y = nums[1];
-    const cmds = d.match(/[MHVLQ][^MHVLQ]*/g)!;
-    for (const c of cmds.slice(1)) {
-        const v = c.slice(1).trim().split(/[\s,]+/).map(Number);
-        if (c[0] === 'H') x = v[0];
-        else if (c[0] === 'V') y = v[0];
-        else if (c[0] === 'L') { x = v[0]; y = v[1]; }
-        else if (c[0] === 'Q') { x = v[2]; y = v[3]; }
-    }
-    return [start, [x, y]];
+const same = (a: Pt, b: Pt) => Math.abs(a[0] - b[0]) < 1e-6 && Math.abs(a[1] - b[1]) < 1e-6;
+
+// Does point p lie on segment a–b (used to find where a branch tees into another run)?
+function onSegment(p: Pt, a: Pt, b: Pt) {
+    const cross = (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+    const within = Math.min(a[0], b[0]) - 1e-6 <= p[0] && p[0] <= Math.max(a[0], b[0]) + 1e-6
+        && Math.min(a[1], b[1]) - 1e-6 <= p[1] && p[1] <= Math.max(a[1], b[1]) + 1e-6;
+    return Math.abs(cross) < 1e-6 && within;
+}
+
+function buildLetter(runs: Pt[][]) {
+    const segs: Seg[] = [];
+    const fittings: Pt[] = [];
+    const flanges: Flange[] = [];
+    let total = 0;
+
+    runs.forEach((run, r) => {
+        for (let i = 0; i < run.length - 1; i++) {
+            const [a, b] = [run[i], run[i + 1]];
+            const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+            segs.push({ x: a[0], y: a[1], angle: Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI, length, start: total });
+            total += length;
+        }
+        run.slice(1, -1).forEach(p => fittings.push(p)); // elbows
+
+        // Open ends get a flange; ends that land on another run become a tee.
+        [[run[0], run[1]], [run[run.length - 1], run[run.length - 2]]].forEach(([end, next]) => {
+            const joinsOther = runs.some((other, o) => o !== r && other.some((p, k) =>
+                k < other.length - 1 && onSegment(end, p, other[k + 1])));
+            if (joinsOther) fittings.push(end);
+            else flanges.push({ x: end[0], y: end[1], angle: Math.atan2(next[1] - end[1], next[0] - end[0]) * 180 / Math.PI });
+        });
+    });
+
+    // A point listed twice (e.g. a branch meeting an elbow) only needs one fitting.
+    const unique = fittings.filter((p, i) => fittings.findIndex(q => same(p, q)) === i);
+    return { segs, total, fittings: unique, flanges };
 }
 
 function layout(words: string[]) {
@@ -49,13 +77,7 @@ function layout(words: string[]) {
         let x = PAD;
         word.split("").forEach((ch, i) => {
             const glyph = LETTERS[ch];
-            letters.push({
-                key: `${row}-${i}`,
-                x,
-                y: PAD + row * (6 + ROW_GAP),
-                runs: glyph.runs,
-                ends: glyph.runs.flatMap(runEnds),
-            });
+            letters.push({ key: `${row}-${i}`, x, y: PAD + row * (6 + ROW_GAP), ...buildLetter(glyph.runs) });
             x += glyph.w + GAP;
         });
         width = Math.max(width, x - GAP + PAD);
@@ -64,7 +86,7 @@ function layout(words: string[]) {
     return { letters, width, height };
 }
 
-type Flow = { id: number; letter: number; color: string };
+type Flow = { id: number; letter: number; color: number };
 
 export default function PipeName({ name }: { name: string }) {
     const { letters, width, height } = layout(name.toUpperCase().split(" "));
@@ -80,8 +102,7 @@ export default function PipeName({ name }: { name: string }) {
                 const free = letters.map((_, i) => i).filter(i => !busy.has(i));
                 if (!free.length || prev.length >= 3) return prev;
                 const letter = free[Math.floor(Math.random() * free.length)];
-                const color = FLUIDS[Math.floor(Math.random() * FLUIDS.length)];
-                return [...prev, { id: id++, letter, color }];
+                return [...prev, { id: id++, letter, color: Math.floor(Math.random() * FLUIDS.length) }];
             });
             timer = setTimeout(tick, 700 + Math.random() * 1100);
         };
@@ -90,59 +111,113 @@ export default function PipeName({ name }: { name: string }) {
     }, [letters.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const done = (flowId: number) => setFlows(prev => prev.filter(f => f.id !== flowId));
+    const frame = (s: { x: number; y: number; angle: number }) => `translate(${s.x} ${s.y}) rotate(${s.angle})`;
 
     return (
         <svg
             viewBox={`0 0 ${width} ${height}`}
             className="w-full max-w-[420px] h-auto overflow-visible"
             aria-hidden="true"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
         >
-            {letters.map(l => (
-                <g key={l.key} transform={`translate(${l.x} ${l.y})`}>
-                    {/* Tube built up in layers: dark outline, glass wall shading, then the empty bore */}
-                    {TUBE.map(([color, width], layer) =>
-                        l.runs.map((d, i) => <path key={`${layer}-${i}`} d={d} stroke={color} strokeWidth={width} />))}
-                </g>
-            ))}
+            <defs>
+                {/* Glass tube shading across the pipe: dark walls, bright centre */}
+                <linearGradient id="name-glass" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#475569" />
+                    <stop offset="0.16" stopColor="#B8C4D2" />
+                    <stop offset="0.42" stopColor="#F1F5F9" />
+                    <stop offset="0.78" stopColor="#CBD5E1" />
+                    <stop offset="1" stopColor="#334155" />
+                </linearGradient>
+                <linearGradient id="name-bore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#CBD5E1" />
+                    <stop offset="0.5" stopColor="#F1F5F9" />
+                    <stop offset="1" stopColor="#D5DDE6" />
+                </linearGradient>
+                <linearGradient id="name-steel" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#334155" />
+                    <stop offset="0.3" stopColor="#94A3B8" />
+                    <stop offset="0.5" stopColor="#E2E8F0" />
+                    <stop offset="0.8" stopColor="#64748B" />
+                    <stop offset="1" stopColor="#1E293B" />
+                </linearGradient>
+                <linearGradient id="name-steel-diag" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stopColor="#CBD5E1" />
+                    <stop offset="0.5" stopColor="#64748B" />
+                    <stop offset="1" stopColor="#1E293B" />
+                </linearGradient>
+                {FLUIDS.map((c, i) => (
+                    <linearGradient key={c} id={`name-fluid-${i}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stopColor={shade(c, 0.45)} />
+                        <stop offset="0.45" stopColor={c} />
+                        <stop offset="1" stopColor={shade(c, -0.4)} />
+                    </linearGradient>
+                ))}
+                {/* Each pipe segment's bore, in its own frame, for clipping liquid */}
+                {letters.map((l, li) => l.segs.map((s, si) => (
+                    <clipPath key={`${li}-${si}`} id={`name-bore-${li}-${si}`}>
+                        <rect x={0} y={-BORE / 2} width={s.length} height={BORE} />
+                    </clipPath>
+                )))}
+            </defs>
 
-            {/* Liquid: fills a letter from its inlet, holds, then drains out.
-                Three strokes in step give it depth: deep edge, body colour, and a lit surface. */}
-            {flows.map(f => {
-                const l = letters[f.letter];
-                const layers: [string, number][] = [[shade(f.color, -0.35), 0.72], [f.color, 0.5], [shade(f.color, 0.55), 0.16]];
+            {letters.map((l, li) => {
+                const flow = flows.find(f => f.letter === li);
                 return (
-                    <g key={f.id} transform={`translate(${l.x} ${l.y})`}>
-                        {layers.map(([color, width], layer) => l.runs.map((d, i) => (
-                            <path
-                                key={`${layer}-${i}`}
-                                d={d}
-                                pathLength={100}
-                                stroke={color}
-                                strokeWidth={width}
-                                strokeDasharray="100 100"
-                                className="animate-fluid-fill"
-                                onAnimationEnd={layer === 0 && i === 0 ? () => done(f.id) : undefined}
-                            />
-                        )))}
+                    <g key={l.key} transform={`translate(${l.x} ${l.y})`}>
+                        {/* Pipe spools */}
+                        {l.segs.map((s, si) => (
+                            <g key={si} transform={frame(s)}>
+                                <rect x={0} y={-R} width={s.length} height={R * 2} fill="url(#name-glass)" />
+                                <rect x={0} y={-BORE / 2} width={s.length} height={BORE} fill="url(#name-bore)" opacity={0.9} />
+                            </g>
+                        ))}
+
+                        {/* Liquid fills each spool in flow order, holds, then drains the same way */}
+                        {flow && l.segs.map((s, si) => {
+                            const fillDelay = (s.start / l.total) * FILL;
+                            const fillTime = (s.length / l.total) * FILL;
+                            const drainDelay = FILL + HOLD + (s.start / l.total) * DRAIN;
+                            const drainTime = (s.length / l.total) * DRAIN;
+                            const last = si === l.segs.length - 1;
+                            return (
+                                <g key={`${flow.id}-${si}`} transform={frame(s)} clipPath={`url(#name-bore-${li}-${si})`}>
+                                    <g
+                                        style={{
+                                            '--len': `${s.length}px`,
+                                            animation: `pipe-fill ${fillTime}s linear ${fillDelay}s both, pipe-drain ${drainTime}s linear ${drainDelay}s forwards`,
+                                        } as React.CSSProperties}
+                                        onAnimationEnd={last ? (e => e.animationName === 'pipe-drain' && done(flow.id)) : undefined}
+                                    >
+                                        <rect x={0} y={-BORE / 2} width={s.length} height={BORE} fill={`url(#name-fluid-${flow.color})`} />
+                                        <rect x={0} y={-BORE / 2 + 0.1} width={s.length} height={0.1} fill="#fff" opacity={0.55} />
+                                    </g>
+                                </g>
+                            );
+                        })}
+
+                        {/* Glass reflection running along the top of each spool */}
+                        {l.segs.map((s, si) => (
+                            <g key={`h${si}`} transform={frame(s)}>
+                                <rect x={0} y={-R + 0.14} width={s.length} height={0.13} fill="#fff" opacity={0.8} />
+                            </g>
+                        ))}
+
+                        {/* Steel elbows and tees at every joint */}
+                        {l.fittings.map(([x, y], i) => (
+                            <rect key={`f${i}`} x={x - 0.7} y={y - 0.7} width={1.4} height={1.4} rx={0.42}
+                                fill="url(#name-steel-diag)" stroke="#1E293B" strokeWidth={0.08} />
+                        ))}
+
+                        {/* Flange plates on open ends, square to the pipe */}
+                        {l.flanges.map((f, i) => (
+                            <g key={`fl${i}`} transform={frame(f)}>
+                                <rect x={-0.12} y={-R - 0.32} width={0.42} height={(R + 0.32) * 2} rx={0.08}
+                                    fill="url(#name-steel)" stroke="#1E293B" strokeWidth={0.06} />
+                            </g>
+                        ))}
                     </g>
                 );
             })}
-
-            {/* Glass reflection over the liquid, then steel flanges at the pipe ends */}
-            {letters.map(l => (
-                <g key={`g${l.key}`} transform={`translate(${l.x} ${l.y})`}>
-                    {l.runs.map((d, i) => <path key={i} d={d} stroke="#fff" strokeWidth={0.1} opacity={0.8} transform="translate(-0.22 -0.22)" />)}
-                    {l.ends.map(([x, y], i) => (
-                        <g key={`f${i}`}>
-                            <circle cx={x} cy={y} r={0.88} fill="#334155" />
-                            <circle cx={x - 0.2} cy={y - 0.2} r={0.42} fill="#94A3B8" />
-                        </g>
-                    ))}
-                </g>
-            ))}
         </svg>
     );
 }

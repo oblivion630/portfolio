@@ -155,7 +155,7 @@ export const profile: Profile = {
                 "Generated equipment sizing and performance estimates to support preliminary design and feasibility studies."
             ],
             links: [
-                { label: "View Code", url: "/projects/sizing-program-code/index.html" }
+                { label: "Open Calculator", url: "/calculator" }
             ]
         },
         {
