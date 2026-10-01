@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, FileText } from 'lucide-react';
 import { Profile } from '@/data/profile';
 import TankButton from './TankButton';
+import MixingTank from './MixingTank';
 
 const navLinks = [
     { name: 'About', href: '#about' },
@@ -28,7 +29,8 @@ export default function Navbar({ profile }: { profile: Profile }) {
         <nav className={`fixed top-0 w-full z-50 transition-colors duration-200 ${scrolled || isOpen ? 'bg-white/90 backdrop-blur-md border-b border-line' : 'bg-transparent'}`}>
             <div className="max-w-6xl mx-auto px-4 sm:px-6">
                 <div className="flex items-center justify-between h-16">
-                    <a href="#" className="font-bold text-lg tracking-tight text-ink">
+                    <a href="#" className="flex items-center gap-2 font-bold text-lg tracking-tight text-ink">
+                        <MixingTank />
                         {profile.name}
                     </a>
 
