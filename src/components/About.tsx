@@ -47,7 +47,7 @@ export default function About({ profile }: { profile: Profile }) {
                         <div className="flex items-start gap-3 text-gray-400 pt-2 border-t border-blueprint-grid/50 mt-2">
                             <Zap size={16} className="text-blueprint-highlight mt-1" />
                             <div className="text-xs">
-                                Interests: Process Safety, Renewable Energy, Automation
+                                Interests: Hydrometallurgy, Battery Recycling, Process Design, Process Safety
                             </div>
                         </div>
                     </div>

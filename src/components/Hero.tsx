@@ -15,7 +15,7 @@ export default function Hero({ profile, animated }: { profile: Profile; animated
                 <div className="flex flex-col space-y-6">
                     <div className="inline-flex items-center space-x-2 text-blueprint-highlight">
                         <span className="w-2 h-2 bg-current rounded-full animate-pulse" />
-                        <span className="font-mono text-sm tracking-widest uppercase">Process Status: Online</span>
+                        <span className="font-mono text-sm tracking-widest uppercase">Open to Work · New Grad Roles</span>
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">

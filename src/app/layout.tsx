@@ -15,11 +15,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-    title: 'Chemical Engineering Portfolio | Process Design & Optimization',
-    description: 'Portfolio of a Final Year Chemical Engineering Student specializing in process design, kinetics, and sustainable technologies.',
+    title: 'Hekmat Kawas | Chemical Engineering – Process & Metallurgy',
+    description: 'Hekmat Kawas — Chemical Engineering (TMU, Dec 2026) and Junior Metallurgist. Open to new graduate roles in process engineering, metallurgy, and R&D.',
     openGraph: {
-        title: 'Chemical Engineering Portfolio',
-        description: 'Process Design, Research, and Engineering Projects',
+        title: 'Hekmat Kawas | Chemical Engineering Portfolio',
+        description: 'Open to new graduate roles in process engineering, metallurgy, and R&D.',
         type: 'website',
     }
 };

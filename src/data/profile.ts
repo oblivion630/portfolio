@@ -50,74 +50,105 @@ export interface Profile {
 
 export const profile: Profile = {
     name: "Hekmat Kawas",
-    title: "Chemical Engineering Undergraduate",
-    tagline: "Bridging process design, data analysis, and sustainable innovation.",
+    title: "B.Eng. Chemical Engineering (Dec 2026) · Junior Metallurgist",
+    tagline: "Open to full-time new graduate roles in process engineering, metallurgy, and R&D. Bridging pilot-scale operations, process design, and data-driven optimization.",
     location: "Toronto, ON",
     email: "kawas.hekmat@gmail.com",
     linkedin: "https://linkedin.com/in/hekmat-kawas/",
     resumeUrl: "/resume.pdf",
     about: {
-        summary: "Bachelor of Chemical Engineering student at Toronto Metropolitan University with a strong foundation in process design, optimization, and R&D. Experienced in powder coating formulations, batch data analysis, and safety-critical lab operations. Skilled in leveraging technical tools like Aspen Plus, SolidWorks, and Python to solve engineering challenges.",
+        summary: "Chemical Engineering student at Toronto Metropolitan University completing my final course (graduating Dec 2026) and available now for full-time new graduate roles. Currently working as a Junior Metallurgist in process research at Ortech Inc. Hands-on experience optimizing pilot-scale leach circuits, scaling extraction processes, and developing powder coating formulations in R&D. Skilled in mass and energy balances, equipment and piping sizing, and tools like Aspen Plus, SolidWorks, and Python.",
         highlights: [
-            "Process Simulation & Design (Aspen Plus, HYSYS)",
-            "Equipment Sizing & Modeling (SolidWorks, Python)",
-            "Data Analysis & Digitization (Excel, Python)",
-            "Safety & Compliance (WHMIS, SDS)"
+            "Pilot-Scale Operations & Hydrometallurgy (Leaching, Filtration)",
+            "Process Design (Mass & Energy Balances, PFDs, Equipment Sizing)",
+            "Process Simulation & Modeling (Aspen Plus, HYSYS, Python)",
+            "Safety & SOP Development (WHMIS, Acid Handling)"
         ],
         education: {
-            degree: "Bachelor of Chemical Engineering",
+            degree: "Bachelor of Engineering in Chemical Engineering",
             school: "Toronto Metropolitan University",
-            graduation: "Graduating Dec, 2026",
+            graduation: "Expected Dec 2026",
             gpa: undefined,
         }
     },
     skills: [
         {
-            category: "Software",
-            items: ["Aspen Plus", "Aspen HYSYS", "SolidWorks", "Excel & MS tools"]
+            category: "Process Engineering",
+            items: ["Mass & energy balances", "Equipment & piping sizing", "PFDs", "Process optimization", "Pilot-scale operations"]
+        },
+        {
+            category: "Software & Programming",
+            items: ["Aspen Plus", "Aspen HYSYS", "Python", "SolidWorks", "Excel", "MATLAB", "Java"]
         },
         {
             category: "Lab & Process Skills",
-            items: ["Chemical handling", "Troubleshooting", "Technical reporting", "Lab-scale and pilot-scale equipment"]
-        },
-        {
-            category: "Programming Languages",
-            items: ["MATLAB", "Java", "Python"]
+            items: ["Leaching", "Filter press & vacuum filtration", "Hazardous material handling (WHMIS)", "SOP development"]
         }
     ],
     experience: [
         {
+            id: "exp2",
+            role: "Junior Metallurgist - Process Research",
+            company: "Ortech Inc.",
+            location: "Mississauga, ON",
+            date: "May 2026 – Present",
+            bullets: [
+                "Optimized Mg extraction in a pilot-scale HCl leach circuit by testing acid concentrations from 10–20%, identifying 16% as optimal and raising extraction from 89% to 91%.",
+                "Redesigned pilot filter press setup for leach residue separation, expanding filtration area from 8 to 12 plates and revising the operating procedure to cut filtration time by 23%.",
+                "Co-designed and scaled extraction processes for magnesium chloride recovery, introducing a water-wash and vacuum filtration protocol that recovered 93% purity silica from the process residue.",
+                "Diagnosed and repaired leaking lines and miscalibrated dosing pumps across pilot plant and lab unit operations, cutting chemical consumption by 5% and reducing downtime by 1 hour/day.",
+                "Wrote 3 SOPs for pilot plant HCl charging and acid transfers and trained a new hire on safe acid handling.",
+                "Co-authored a client technical report on pilot-scale MgCl₂ leach results, compiling test data and mass balances."
+            ]
+        },
+        {
             id: "exp1",
             role: "R&D Lab Technician",
             company: "Protech Group",
-            location: "Toronto, ON", // Inferred location from resume context or typical location 
+            location: "Toronto, ON",
             date: "Jan 2025 – Aug 2025",
             bullets: [
-                "Prepared and validated 75+ powder coating formulations using mixing, extrusion, and grinding equipment for automotive and industrial applications, used to generate 70 tons annually resulting in $725K+ in reoccurring revenue.",
-                "Conducted error analysis using lab instrumentation and solved 5+ contamination cases, improving batch pass rates by 20% and freeing lab capacity to execute additional formulations contributing to $15K+ in profit.",
-                "Led the digitization of manual batch records and lab documentation for 200+ formulations, increasing operational efficiency and reducing downtime by 7% ($10.5K+ annual savings).",
-                "Analyzed batch data in Excel to compare trial performance across variables such as resin ratio, cure time, and pigment load, helping refine formulation parameters increasing productivity by 30% by saving 5 hours per formulation.",
-                "Identified root causes of sample failures related to dispersion quality and formulation balance, implementing targeted adjustments that enabled successful client evaluation samples.",
-                "Operated within a safety-critical chemical laboratory, maintaining compliance with WHMIS, SDS-guided chemical handling, and hazardous waste protocols, contributing to zero findings during internal safety audits."
+                "Prepared and validated powder coating formulations using mixing, extrusion, and grinding, including 75+ that advanced to full-scale production, generating 70 tons annually and $725K+ in recurring revenue.",
+                "Resolved 5+ contamination cases by systematically isolating raw materials, equipment, and process steps, raising batch pass rates by 20% and freeing lab capacity that added $15K+ in profit.",
+                "Analyzed Excel batch data on resin ratio, cure time, and pigment load to find patterns in successful trials, cutting trial iterations and saving 5 hours per formulation.",
+                "Digitized manual batch records and lab documentation for 200+ formulations, cutting record retrieval time and reducing downtime by 7% ($10.5K+ annual savings).",
+                "Diagnosed dispersion and formulation-balance failures in client samples, adjusting formulations, grinding and baking times, and extruder settings until samples passed client evaluation."
             ]
         },
-
     ],
     projects: [
         {
             id: "p1",
-            title: "Lithium Recycling Plant Design",
+            title: "Lithium Recycling Plant Design (Capstone)",
             category: "Process Design",
-            impact: "Designed scalable plant to process 1000 tons of batteries/year.",
-            tools: ["Hydrometallurgy", "Process Flow Diagrams", "Mass & Energy Balances"],
-            description: "Designed a scalable process plant that recovers lithium from used lithium-ion batteries using hydrometallurgical techniques able to process up to 1000 tons of batteries annually.",
+            impact: "Designed a 15,000 t/yr battery bioleaching plant recovering ~86% Li as Li₂CO₃.",
+            tools: ["Bioleaching", "Mass & Energy Balances", "Equipment & Piping Sizing"],
+            description: "Capstone design of a battery bioleaching plant processing 15,000 t/yr of spent lithium-ion batteries, achieving ~86% lithium recovery as Li₂CO₃ (~1,930 t/yr).",
             featured: true,
             bullets: [
-                "Created process flow diagrams, and performed mass and energy balances to make decisions regarding equipment sizing, utility requirements, and process integration decisions.",
-                "Selected and sized unit operations optimizing for the most efficient throughput, residence time, and recovery constraints."
+                "Sized all equipment and piping, including 2 bioleaching batch reactors (54 m³ each), 4 membrane filter presses, and 35 pipelines and pumps with pressure drop and NPSH checks.",
+                "Performed mass balances for a 15,000 t/yr battery bioleaching plant, achieving ~86% Li recovery as Li₂CO₃ (~1,930 t/yr).",
+                "Completed energy balances for 15 major units, including 443 kW aeration compressors and a 325 kW heat exchanger."
             ],
             links: [
-                { label: "View Report", url: "/projects/lithium-recycling-report.pdf" } // Placeholder
+                { label: "Report 1 (Nov 2025)", url: "/projects/lithium-recycling-report.pdf" },
+                { label: "Report 2 (Mar 2026)", url: "/projects/lithium-recycling-report-2.pdf" }
+            ]
+        },
+        {
+            id: "p3",
+            title: "Process Equipment Sizing Program",
+            category: "Coding",
+            impact: "Developed Python app for pump, pipe, and reactor sizing.",
+            tools: ["Python", "Fluid Mechanics", "Design Correlations"],
+            description: "Developed a Python-based process equipment sizing application integrating fluid mechanics and reaction engineering to evaluate pump performance, pipe hydraulics, and reactor sizing under user-defined conditions.",
+            featured: true,
+            bullets: [
+                "Implemented core chemical engineering design correlations, including flow regime analysis, friction factor correlations, and total dynamic head calculations within an interactive user interface.",
+                "Generated equipment sizing and performance estimates to support preliminary design and feasibility studies."
+            ],
+            links: [
+                { label: "View Code", url: "/projects/sizing-program-code/index.html" }
             ]
         },
         {
@@ -133,23 +164,7 @@ export const profile: Profile = {
                 "Evaluated and selected process control strategies for optimal concentration consistency and minimal composition variability."
             ],
             links: [
-                { label: "View Model", url: "/projects/blending-unit-design.pdf" } // Placeholder
-            ]
-        },
-        {
-            id: "p3",
-            title: "Process Equipment Sizing Program",
-            category: "Coding",
-            impact: "Developed Python app for pump, pipe, and reactor sizing.",
-            tools: ["Python", "Fluid Mechanics", "Design Correlations"],
-            description: "Developed a Python-based process equipment sizing application integrating fluid mechanics and reaction engineering to evaluate pump performance, pipe hydraulics, and reactor sizing under user-defined conditions.",
-            featured: true,
-            bullets: [
-                "Implemented core chemical engineering design correlations, including flow regime analysis, friction factor correlations, and total dynamic head calculations within an interactive user interface.",
-                "Developed preliminary equipment sizing and performance estimates used to support preliminary process design, equipment selection, and early-phase feasibility assessment."
-            ],
-            links: [
-                { label: "View Code", url: "/projects/sizing-program-code/index.html" } // Folder link
+                { label: "View Model", url: "/projects/blending-unit-design.pdf" }
             ]
         }
     ]
