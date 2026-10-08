@@ -172,7 +172,8 @@ export const profile: Profile = {
                 "Evaluated and selected process control strategies for optimal concentration consistency and minimal composition variability."
             ],
             links: [
-                { label: "View Model", url: "/projects/blending-unit-design.pdf" }
+                { label: "View 3D Model", url: "/projects/blending-unit-3d.html" },
+                { label: "Design Report", url: "/projects/blending-unit-design.pdf" }
             ]
         }
     ]

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blending Unit 3D Model | Hekmat Kawas</title>
+    <meta name="description" content="Interactive 3D model of a 2.0 m³ baffled stirred tank with a 45° pitched-blade turbine for ethanol–water blending.">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <style>
+        :root { --ink: #0F172A; --body: #334155; --muted: #64748B; --line: #E2E8F0; --paper: #F8FAFC; --accent: #0E7490; --soft: #ECFEFF; }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; }
+        body { background: var(--paper); color: var(--body); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; display: flex; flex-direction: column; }
+        header { background: #fff; border-bottom: 1px solid var(--line); }
+        .bar { max-width: 1400px; margin: 0 auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+        .bar a { color: var(--ink); font-weight: 700; text-decoration: none; }
+        .bar a.report { font-size: 14px; font-weight: 600; color: #fff; background: var(--accent); padding: 8px 14px; border-radius: 6px; }
+        .wrap { flex: 1; display: grid; grid-template-columns: 1fr 320px; gap: 16px; max-width: 1400px; width: 100%; margin: 0 auto; padding: 16px; min-height: 0; }
+        .stage { position: relative; background: linear-gradient(#ffffff, #EEF2F6); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-height: 520px; }
+        #viewport { position: absolute; inset: 0; }
+        .titleblock { position: absolute; left: 12px; top: 12px; background: rgba(255,255,255,0.9); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 12px; pointer-events: none; }
+        .titleblock strong { display: block; color: var(--ink); font-size: 14px; }
+        .views { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+        .views button { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font: 600 12px inherit; font-family: inherit; color: var(--body); cursor: pointer; }
+        .views button:hover { border-color: var(--accent); color: var(--accent); }
+        .views button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+        .hint { position: absolute; right: 12px; bottom: 12px; font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.85); padding: 4px 8px; border-radius: 6px; pointer-events: none; }
+        .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+        aside { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+        .card h2 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+        .card h1 { margin: 0 0 4px; font-size: 18px; color: var(--ink); line-height: 1.25; }
+        .card p { margin: 0; font-size: 13px; line-height: 1.5; }
+        label.toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 4px 0; cursor: pointer; }
+        label.toggle input { accent-color: var(--accent); }
+        .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-left: auto; }
+        dl { margin: 0; font-size: 13px; }
+        dl div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+        dl div:last-child { border-bottom: 0; }
+        dt { color: var(--muted); }
+        dd { margin: 0; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+        .note { font-size: 12px; color: var(--muted); }
+        /* Dimension callouts rendered over the 3D view */
+        .dim { font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: #B45309; background: rgba(255,251,235,0.95); border: 1px solid #FCD34D; border-radius: 4px; padding: 1px 5px; white-space: nowrap; pointer-events: none; }
+        .acc { font: 600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #475569; background: rgba(255,255,255,0.9); border: 1px dashed #94A3B8; border-radius: 4px; padding: 1px 5px; white-space: nowrap; pointer-events: none; }
+        @media (max-width: 900px) {
+            .wrap { grid-template-columns: 1fr; }
+            .stage { min-height: 70vh; }
+        }
+    </style>
+    <script type="importmap">
+        { "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        } }
+    </script>
+</head>
+<body>
+    <header>
+        <div class="bar">
+            <a href="/">Hekmat Kawas</a>
+            <a class="report" href="/projects/blending-unit-design.pdf" target="_blank" rel="noopener">Read the design report</a>
+        </div>
+    </header>
+
+    <div class="wrap">
+        <section class="stage">
+            <div id="viewport"></div>
+            <div class="loading" id="loading">Loading 3D model…</div>
+            <div class="titleblock">
+                <strong>Liquid–Liquid Blending Unit</strong>
+                2.0 m³ baffled stirred tank · 316L SS · units: m
+            </div>
+            <div class="views" id="views">
+                <button data-view="iso" class="on">Isometric</button>
+                <button data-view="front">Front</button>
+                <button data-view="top">Top</button>
+                <button data-view="section">Section</button>
+            </div>
+            <div class="hint">Drag to rotate · scroll to zoom · right-drag to pan</div>
+        </section>
+
+        <aside>
+            <div class="card">
+                <h1>Stirred tank for 20% v/v ethanol–water</h1>
+                <p>Flat-bottom cylindrical vessel with four wall baffles and a top-entering 45° four-blade pitched-blade turbine, sized for pharmaceutical co-solvent blending.</p>
+            </div>
+
+            <div class="card">
+                <h2>Display</h2>
+                <label class="toggle"><input type="checkbox" id="tDims" checked> Dimensions</label>
+                <label class="toggle"><input type="checkbox" id="tLiquid" checked> Liquid (1.40 m level)</label>
+                <label class="toggle"><input type="checkbox" id="tFlow" checked> Axial flow pattern</label>
+                <label class="toggle"><input type="checkbox" id="tSpin" checked> Spin impeller</label>
+                <label class="toggle"><input type="checkbox" id="tReal"> Real speed (230 rpm)</label>
+                <label class="toggle"><input type="checkbox" id="tAcc" checked> Drive, nozzles &amp; legs <span class="swatch" style="background:#94A3B8"></span></label>
+                <p class="note" style="margin-top:6px">Drive, nozzles and legs are illustrative. The report specifies they exist but doesn't size them.</p>
+            </div>
+
+            <div class="card">
+                <h2>Geometry (from report)</h2>
+                <dl>
+                    <div><dt>Tank diameter T</dt><dd>1.40 m</dd></div>
+                    <div><dt>Liquid height H (H/T = 1)</dt><dd>1.40 m</dd></div>
+                    <div><dt>Total tank height</dt><dd>1.80 m</dd></div>
+                    <div><dt>Impeller diameter D (D/T = 1/3)</dt><dd>0.467 m</dd></div>
+                    <div><dt>Blade width W (W/D = 1/5)</dt><dd>0.0933 m</dd></div>
+                    <div><dt>Clearance C (C/T = 1/3)</dt><dd>0.467 m</dd></div>
+                    <div><dt>Baffles (4 × T/10)</dt><dd>0.14 m</dd></div>
+                    <div><dt>Shaft diameter (d/D = 2/25)</dt><dd>0.0373 m</dd></div>
+                </dl>
+            </div>
+
+            <div class="card">
+                <h2>Performance</h2>
+                <dl>
+                    <div><dt>Impeller speed</dt><dd>3.83 s⁻¹ (230 rpm)</dd></div>
+                    <div><dt>Reynolds number</dt><dd>5.3 × 10⁵</dd></div>
+                    <div><dt>Power number Nₚ</dt><dd>1.27</dd></div>
+                    <div><dt>Power draw</dt><dd>1.5 kW (0.75 kW/m³)</dd></div>
+                    <div><dt>Pumping capacity</dt><dd>0.308 m³/s</dd></div>
+                    <div><dt>Mixing time t₉₉</dt><dd>≈ 25 s</dd></div>
+                </dl>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+        // ---- Design dimensions from the report (metres) ----
+        const T = 1.40, R = T / 2;          // tank diameter
+        const H_LIQ = 1.40;                 // liquid height
+        const H_TANK = 1.80;                // total tank height
+        const D = 0.467;                    // impeller diameter
+        const W = 0.0933;                   // blade width
+        const C = 0.467;                    // impeller clearance off bottom
+        const B = 0.14;                     // baffle width (T/10)
+        const D_SHAFT = 0.0373;             // shaft diameter
+        const RPM = 230;                    // 3.83 s^-1
+        const WALL = 0.006;                 // shell thickness (display only)
+
+        const host = document.getElementById('viewport');
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.localClippingEnabled = true;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        host.appendChild(renderer.domElement);
+
+        const labels = new CSS2DRenderer();
+        labels.domElement.style.position = 'absolute';
+        labels.domElement.style.inset = '0';
+        labels.domElement.style.pointerEvents = 'none';
+        host.appendChild(labels.domElement);
+
+        const scene = new THREE.Scene();
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+        const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 50);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 0.95, 0);
+
+        scene.add(new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 0.6));
+        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+        sun.position.set(3, 5, 4);
+        scene.add(sun);
+
+        // Section view cuts away the front half (z > 0) so the internals show, like a CAD section.
+        const sectionPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
+        const clipped = [];
+        const clip = mat => { clipped.push(mat); return mat; };
+
+        // ---- Materials ----
+        const steel = clip(new THREE.MeshStandardMaterial({ color: 0xd6dde5, metalness: 0.9, roughness: 0.28, side: THREE.DoubleSide }));
+        const steelDark = clip(new THREE.MeshStandardMaterial({ color: 0x9aa7b5, metalness: 0.9, roughness: 0.35 }));
+        const shellMat = clip(new THREE.MeshStandardMaterial({ color: 0xdfe6ee, metalness: 0.85, roughness: 0.3, side: THREE.DoubleSide, transparent: true, opacity: 0.32, depthWrite: false }));
+        const liquidMat = clip(new THREE.MeshPhysicalMaterial({ color: 0x7dd3fc, roughness: 0.1, transmission: 0.35, transparent: true, opacity: 0.38, depthWrite: false, side: THREE.DoubleSide }));
+        const accMat = clip(new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.5, roughness: 0.5 }));
+        const motorMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.4, roughness: 0.5 });
+
+        // ---- Vessel ----
+        const vessel = new THREE.Group();
+        scene.add(vessel);
+
+        const shell = new THREE.Mesh(new THREE.CylinderGeometry(R + WALL, R + WALL, H_TANK, 96, 1, true), shellMat);
+        shell.position.y = H_TANK / 2;
+        vessel.add(shell);
+        // Shell edges stay crisp even when the shell is see-through
+        const rimMat = clip(new THREE.LineBasicMaterial({ color: 0x64748b }));
+        for (const y of [0, H_TANK]) {
+            const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(
+                Array.from({ length: 128 }, (_, i) => new THREE.Vector3((R + WALL) * Math.cos(i / 128 * Math.PI * 2), y, (R + WALL) * Math.sin(i / 128 * Math.PI * 2)))), rimMat);
+            vessel.add(ring);
+        }
+        const bottom = new THREE.Mesh(new THREE.CylinderGeometry(R + WALL, R + WALL, 0.012, 96), steel);
+        bottom.position.y = -0.006;
+        vessel.add(bottom);
+
+        // Four wall baffles at 90°, width T/10, full straight side
+        for (let i = 0; i < 4; i++) {
+            const a = i * Math.PI / 2 + Math.PI / 4;
+            const baffle = new THREE.Mesh(new THREE.BoxGeometry(B, H_TANK - 0.1, 0.01), steel);
+            baffle.position.set((R - B / 2) * Math.cos(a), (H_TANK - 0.1) / 2 + 0.05, (R - B / 2) * Math.sin(a));
+            baffle.rotation.y = -a;
+            vessel.add(baffle);
+        }
+
+        // ---- Liquid ----
+        const liquid = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.002, R - 0.002, H_LIQ, 96), liquidMat);
+        liquid.position.y = H_LIQ / 2;
+        liquid.renderOrder = 1;
+        scene.add(liquid);
+
+        // ---- Agitator: shaft + 45° four-blade pitched-blade turbine ----
+        const agitator = new THREE.Group();
+        scene.add(agitator);
+        const shaftTop = H_TANK + 0.12;
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(D_SHAFT / 2, D_SHAFT / 2, shaftTop - C + 0.04, 32), steelDark);
+        shaft.position.y = (shaftTop + C - 0.04) / 2;
+        agitator.add(shaft);
+
+        const impeller = new THREE.Group();
+        impeller.position.y = C;
+        agitator.add(impeller);
+        const HUB_R = 0.045;
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(HUB_R, HUB_R, 0.09, 32), steelDark);
+        impeller.add(hub);
+        const bladeLen = D / 2 - HUB_R;
+        for (let i = 0; i < 4; i++) {
+            const arm = new THREE.Group();
+            arm.rotation.y = i * Math.PI / 2;
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(bladeLen, W, 0.008), steel);
+            blade.position.x = HUB_R + bladeLen / 2;
+            blade.rotation.x = Math.PI / 4; // 45° pitch about the blade's radial axis
+            arm.add(blade);
+            impeller.add(arm);
+        }
+
+        // ---- Illustrative accessories (exist in the design, not dimensioned in the report) ----
+        const accessories = new THREE.Group();
+        scene.add(accessories);
+        const cover = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.03, R + 0.03, 0.02, 96), accMat);
+        cover.position.y = H_TANK + 0.01;
+        accessories.add(cover);
+        const drive = new THREE.Group();
+        drive.position.y = H_TANK + 0.02;
+        accessories.add(drive);
+        const flange = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.03, 48), accMat);
+        flange.position.y = 0.015;
+        drive.add(flange);
+        const gearbox = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.2, 0.22), motorMat);
+        gearbox.position.y = 0.13;
+        drive.add(gearbox);
+        const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.3, 40), motorMat);
+        motor.rotation.z = Math.PI / 2;
+        motor.position.set(0.25, 0.15, 0);
+        drive.add(motor);
+        for (let i = 0; i < 6; i++) { // motor cooling fins
+            const fin = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.006, 6, 32), accMat);
+            fin.rotation.y = Math.PI / 2;
+            fin.position.set(0.14 + i * 0.04, 0.15, 0);
+            drive.add(fin);
+        }
+        // Top inlet nozzles for ethanol and water, side bottom drain, support legs
+        const nozzle = (x, z, label, labelLift) => {
+            const n = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.16, 24), accMat);
+            n.position.set(x, H_TANK + 0.08, z);
+            accessories.add(n);
+            const f = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.015, 24), accMat);
+            f.position.set(x, H_TANK + 0.16, z);
+            accessories.add(f);
+            tag(accessories, label, new THREE.Vector3(x, H_TANK + labelLift, z), 'acc');
+        };
+        const drain = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2, 24), accMat);
+        drain.rotation.z = Math.PI / 2;
+        drain.position.set(R + 0.1, 0.06, 0);
+        accessories.add(drain);
+        for (let i = 0; i < 4; i++) {
+            const a = i * Math.PI / 2 + Math.PI / 4;
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.06), accMat);
+            leg.position.set((R - 0.05) * Math.cos(a), -0.2, (R - 0.05) * Math.sin(a));
+            accessories.add(leg);
+        }
+
+        // ---- Labels and dimension lines ----
+        function tag(parent, text, pos, cls = 'dim') {
+            const el = document.createElement('div');
+            el.className = cls;
+            el.textContent = text;
+            const obj = new CSS2DObject(el);
+            obj.position.copy(pos);
+            parent.add(obj);
+            return obj;
+        }
+        nozzle(-0.45, 0.15, 'Ethanol inlet', 0.26);
+        nozzle(0.05, 0.5, 'Water inlet', 0.22);
+        tag(accessories, 'Bottom drain', new THREE.Vector3(R + 0.22, 0.14, 0), 'acc');
+        tag(accessories, 'Motor + gearbox', new THREE.Vector3(0.3, H_TANK + 0.5, -0.05), 'acc');
+
+        const dims = new THREE.Group();
+        scene.add(dims);
+        const dimMat = new THREE.LineBasicMaterial({ color: 0xb45309, depthTest: false, transparent: true });
+        function dimLine(a, b, text, offset = new THREE.Vector3()) {
+            const tick = new THREE.Vector3().subVectors(b, a).normalize();
+            const perp = new THREE.Vector3(-tick.y, tick.x, 0).multiplyScalar(0.025);
+            if (perp.lengthSq() < 1e-8) perp.set(0, 0.025, 0);
+            const pts = [a, b, a.clone().add(perp), a.clone().sub(perp), b.clone().add(perp), b.clone().sub(perp)];
+            const geo = new THREE.BufferGeometry().setFromPoints([pts[0], pts[1], pts[2], pts[3], pts[4], pts[5]]);
+            const line = new THREE.LineSegments(geo, dimMat);
+            line.renderOrder = 10;
+            dims.add(line);
+            tag(dims, text, a.clone().add(b).multiplyScalar(0.5).add(offset));
+        }
+        const v = (x, y, z = 0) => new THREE.Vector3(x, y, z);
+        dimLine(v(-R, -0.12), v(R, -0.12), 'T = 1.40 m', v(0, -0.06));
+        dimLine(v(-R - 0.18, 0), v(-R - 0.18, H_LIQ), 'H = 1.40 m', v(-0.14, 0));
+        dimLine(v(-R - 0.42, 0), v(-R - 0.42, H_TANK), '1.80 m', v(-0.1, 0));
+        dimLine(v(-D / 2, C + 0.14), v(D / 2, C + 0.14), 'D = 0.467 m', v(0, 0.06));
+        dimLine(v(D / 2 + 0.08, 0), v(D / 2 + 0.08, C), 'C = 0.467 m', v(0.15, 0));
+        tag(dims, 'W = 0.0933 m', v(-D / 2 - 0.02, C - 0.1));
+        tag(dims, 'Baffle 0.14 m (×4)', v((R - B / 2) * Math.cos(-Math.PI / 4), 0.95, (R - B / 2) * Math.sin(-Math.PI / 4)));
+        tag(dims, 'Shaft Ø 0.0373 m', v(0.15, 1.58));
+
+        // ---- Axial flow pattern: down the shaft, out across the bottom, up the walls, back across the top ----
+        const flow = new THREE.Group();
+        scene.add(flow);
+        const loopCurve = side => new THREE.CatmullRomCurve3([
+            v(side * 0.06, H_LIQ - 0.15), v(side * 0.12, C + 0.15), v(side * 0.3, 0.15),
+            v(side * 0.55, 0.25), v(side * 0.6, H_LIQ * 0.6), v(side * 0.5, H_LIQ - 0.12), v(side * 0.25, H_LIQ - 0.08),
+        ], true);
+        const particles = [];
+        const particleMat = new THREE.MeshBasicMaterial({ color: 0x0e7490 });
+        for (const angle of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
+            const plane = new THREE.Group();
+            plane.rotation.y = angle;
+            flow.add(plane);
+            const curve = loopCurve(1);
+            const path = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(80)),
+                new THREE.LineDashedMaterial({ color: 0x0e7490, dashSize: 0.04, gapSize: 0.03, transparent: true, opacity: 0.5 }));
+            path.computeLineDistances();
+            plane.add(path);
+            for (let k = 0; k < 6; k++) {
+                const p = new THREE.Mesh(new THREE.SphereGeometry(0.014, 12, 8), particleMat);
+                plane.add(p);
+                particles.push({ mesh: p, curve, t: k / 6 });
+            }
+        }
+
+        // Apply the section clip to every clippable material
+        const setSection = on => clipped.forEach(m => { m.clippingPlanes = on ? [sectionPlane] : []; m.needsUpdate = true; });
+
+        // ---- Views ----
+        const VIEWS = {
+            iso: { pos: [3.6, 2.7, 3.9], section: false },
+            front: { pos: [0, 0.9, 5.8], section: false },
+            top: { pos: [0, 6.2, 0.001], section: false },
+            section: { pos: [1.9, 1.8, 5.0], section: true },
+        };
+        function setView(name) {
+            const view = VIEWS[name];
+            camera.position.set(...view.pos);
+            controls.target.set(0, 0.85, 0);
+            setSection(view.section);
+            document.querySelectorAll('#views button').forEach(b => b.classList.toggle('on', b.dataset.view === name));
+        }
+        document.querySelectorAll('#views button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+        // ---- Toggles ----
+        const bind = (id, fn) => { const el = document.getElementById(id); el.addEventListener('change', () => fn(el.checked)); fn(el.checked); };
+        bind('tDims', on => dims.visible = on);
+        bind('tLiquid', on => liquid.visible = on);
+        bind('tFlow', on => flow.visible = on);
+        bind('tAcc', on => accessories.visible = on);
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion) { document.getElementById('tSpin').checked = false; document.getElementById('tFlow').checked = false; flow.visible = false; }
+
+        // ---- Resize and render loop ----
+        function resize() {
+            const { clientWidth: w, clientHeight: h } = host;
+            renderer.setSize(w, h);
+            labels.setSize(w, h);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
+        new ResizeObserver(resize).observe(host);
+        resize();
+        setView('iso');
+
+        const clock = new THREE.Clock();
+        renderer.setAnimationLoop(() => {
+            const dt = Math.min(clock.getDelta(), 0.05);
+            const spinning = document.getElementById('tSpin').checked;
+            const realSpeed = document.getElementById('tReal').checked;
+            const rps = (realSpeed ? RPM : 40) / 60;
+            if (spinning) impeller.rotation.y -= dt * rps * Math.PI * 2;
+            if (flow.visible) for (const p of particles) {
+                p.t = (p.t + dt * (realSpeed ? 0.25 : 0.08)) % 1;
+                p.mesh.position.copy(p.curve.getPointAt(p.t));
+            }
+            controls.update();
+            renderer.render(scene, camera);
+            labels.render(scene, camera);
+        });
+        document.getElementById('loading').remove();
+    </script>
+</body>
+</html>
