@@ -3,69 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sizing Program Code - File Browser</title>
+    <title>Sizing Tool Source | Hekmat Kawas</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <style>
-        body {
-            background-color: #0f172a; /* Slate 900 - matches blueprint bg */
-            color: #e2e8f0; /* Slate 200 */
-            font-family: 'Courier New', Courier, monospace;
-            padding: 40px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #38bdf8; /* Sky 400 - blueprint highlight */
-            border-bottom: 2px solid #1e293b;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        .file-list {
-            list-style: none;
-            padding: 0;
-        }
-        .file-item {
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid #1e293b;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        .file-item:hover {
-            border-color: #38bdf8;
-            background: rgba(56, 189, 248, 0.1);
-        }
-        a {
-            color: #94a3b8;
-            text-decoration: none;
-            flex-grow: 1;
-            display: block;
-        }
-        a:hover {
-            color: #fff;
-        }
-        .icon {
-            margin-right: 15px;
-            color: #38bdf8;
+        :root { --ink: #0F172A; --body: #334155; --muted: #64748B; --line: #E2E8F0; --paper: #F8FAFC; --accent: #0E7490; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--paper); color: var(--body); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+        header { background: #fff; border-bottom: 1px solid var(--line); }
+        .bar { max-width: 1152px; margin: 0 auto; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+        .bar a { color: var(--ink); font-weight: 700; text-decoration: none; }
+        .bar a.cta { font-size: 14px; font-weight: 600; color: #fff; background: var(--accent); padding: 8px 14px; border-radius: 6px; }
+        main { max-width: 1152px; margin: 0 auto; padding: 32px 16px; }
+        h1 { color: var(--ink); font-size: 30px; margin: 0 0 6px; letter-spacing: -0.02em; }
+        .lead { margin: 0 0 24px; }
+        .layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; align-items: start; }
+        nav { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; position: sticky; top: 16px; }
+        nav button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 6px;
+            font: 500 14px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--body); cursor: pointer; }
+        nav button:hover { color: var(--accent); background: var(--paper); }
+        nav button[aria-current="true"] { background: var(--ink); color: #fff; }
+        .viewer { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-width: 0; }
+        .viewer-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 14px; }
+        .viewer-head strong { color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .viewer-head a { color: var(--muted); }
+        pre { margin: 0; }
+        pre code.hljs { padding: 16px; font-size: 13px; line-height: 1.55; background: #fff; }
+        @media (max-width: 760px) {
+            .layout { grid-template-columns: 1fr; }
+            nav { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
+            nav button { width: auto; }
         }
     </style>
 </head>
 <body>
-    <h1>> Sizing_Program_Code_Repository</h1>
-    <ul class="file-list">
-        <li class="file-item"><span class="icon">py</span><a href="app.py">app.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="main.py">main.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="npsh.py">npsh.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="pipe_sizing.py">pipe_sizing.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="piping.py">piping.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="pump.py">pump.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="reactions.py">reactions.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="results.py">results.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="system.py">system.py</a></li>
-        <li class="file-item"><span class="icon">py</span><a href="units.py">units.py</a></li>
-        <li class="file-item"><span class="icon">txt</span><a href="README.txt">README.txt</a></li>
-    </ul>
+    <header>
+        <div class="bar">
+            <a href="/">Hekmat Kawas</a>
+            <a class="cta" href="/calculator">Open the calculator</a>
+        </div>
+    </header>
+    <main>
+        <h1>Process Equipment Sizing Tool: Python source</h1>
+        <p class="lead">The Streamlit app and calculation modules behind the live calculator. Pick a file to read it.</p>
+        <div class="layout">
+            <nav id="files" aria-label="Source files"></nav>
+            <section class="viewer">
+                <div class="viewer-head"><strong id="name"></strong><a id="raw" href="#" download>Download</a></div>
+                <pre><code id="code" class="language-python"></code></pre>
+            </section>
+        </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        const FILES = ["README.md", "app.py", "main.py", "piping.py", "pipe_sizing.py", "system.py", "pump.py",
+            "npsh.py", "heat_exchanger.py", "tank.py", "reactions.py", "flash.py", "units.py"];
+        const nav = document.getElementById("files");
+
+        async function show(file) {
+            nav.querySelectorAll("button").forEach(b => b.setAttribute("aria-current", b.textContent === file));
+            document.getElementById("name").textContent = file;
+            document.getElementById("raw").href = file;
+            const code = document.getElementById("code");
+            code.className = file.endsWith(".md") ? "language-markdown" : "language-python";
+            code.removeAttribute("data-highlighted");
+            try {
+                const res = await fetch(file);
+                code.textContent = res.ok ? await res.text() : "Could not load " + file;
+            } catch {
+                code.textContent = "Could not load " + file;
+            }
+            if (window.hljs) hljs.highlightElement(code);
+            history.replaceState(null, "", "#" + file);
+        }
+
+        FILES.forEach(file => {
+            const b = document.createElement("button");
+            b.textContent = file;
+            b.onclick = () => show(file);
+            nav.appendChild(b);
+        });
+        const initial = decodeURIComponent(location.hash.slice(1));
+        show(FILES.includes(initial) ? initial : "README.md");
+    </script>
 </body>
 </html>

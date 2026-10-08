@@ -7,10 +7,10 @@ import TankButton from './TankButton';
 import MixingTank from './MixingTank';
 
 const navLinks = [
-    { name: 'About', href: '#about' },
-    { name: 'Experience', href: '#experience' },
     { name: 'Projects', href: '#projects' },
+    { name: 'About', href: '#about' },
     { name: 'Skills', href: '#skills' },
+    { name: 'Experience', href: '#experience' },
     { name: 'Contact', href: '#contact' },
 ];
 

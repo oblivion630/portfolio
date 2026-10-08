@@ -15,10 +15,11 @@ export default function Home() {
             <BackgroundPipes />
             <Navbar profile={profile} />
             <Hero profile={profile} />
-            <About profile={profile} />
-            <Experience profile={profile} />
+            {/* Ordered for a recruiter's skim: headline numbers, then standout work, background, skills, full history */}
             <Projects profile={profile} />
+            <About profile={profile} />
             <Skills profile={profile} />
+            <Experience profile={profile} />
             <Contact profile={profile} />
             <Footer profile={profile} />
         </main>

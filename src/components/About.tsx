@@ -13,7 +13,7 @@ export default function About({ profile }: { profile: Profile }) {
     ];
 
     return (
-        <Section id="about" title="About" eyebrow="Profile">
+        <Section id="about" title="About" eyebrow="Profile" className="bg-white">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 space-y-8">
                     <p className="text-lg leading-relaxed text-body">{profile.about.summary}</p>
@@ -22,7 +22,7 @@ export default function About({ profile }: { profile: Profile }) {
                         <h3 className="text-sm font-semibold uppercase tracking-wider text-ink mb-4">Core competencies</h3>
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {profile.about.highlights.map((item) => (
-                                <li key={item} className="flex items-start gap-3 p-3 rounded-lg bg-white border border-line text-sm text-body">
+                                <li key={item} className="flex items-start gap-3 p-3 rounded-lg bg-paper border border-line text-sm text-body">
                                     <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-accent flex-shrink-0" />
                                     {item}
                                 </li>
@@ -31,7 +31,7 @@ export default function About({ profile }: { profile: Profile }) {
                     </div>
                 </div>
 
-                <aside className="rounded-xl bg-white border border-line p-6 h-fit space-y-5">
+                <aside className="rounded-xl bg-paper border border-line p-6 h-fit space-y-5">
                     {facts.map(({ icon: Icon, label, sub }) => (
                         <div key={label} className="flex gap-3">
                             <Icon size={18} className="text-accent mt-0.5 flex-shrink-0" />
